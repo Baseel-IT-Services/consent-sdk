@@ -9,6 +9,9 @@
     "build": "vite build",
     "test": "vitest run --passWithNoTests"
   },
+  "dependencies": {
+    "@baseel/types": "*"
+  },
   "devDependencies": {
     "@types/node": "^20.12.12",
     "terser": "^5.31.0",
