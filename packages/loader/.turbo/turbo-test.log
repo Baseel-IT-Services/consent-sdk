@@ -1,0 +1,55 @@
+
+> @baseel/loader@0.0.1 test
+> vitest run --passWithNoTests
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mC:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/packages/loader[39m
+
+[90mstdout[2m | src/index.test.ts[2m > [22m[2mBaseel SDK Loader[2m > [22m[2mSuccessful Initialization & Defaults[2m > [22m[2mshould respect custom configurations[22m[39m
+[Baseel SDK] [INFO] Initializing SDK and fetching configuration from backend...
+[Baseel SDK] [DEBUG] ConfigService: Fetching config from https://custom.baseel.com/v1/configs/my-custom-app (environment: development)
+[Baseel SDK] [DEBUG] GET request to URL: https://custom.baseel.com/v1/configs/my-custom-app
+[90mstderr[2m | src/index.test.ts[2m > [22m[2mBaseel SDK Loader[2m > [22m[2mBootstrap Config Fetch Failure Handling[2m > [22m[2mshould reject initialization and throw when fetch fails[22m[39m
+[Baseel SDK] [ERROR] Failed to initialize Baseel SDK: ApiError: Network failure: Network Disconnected
+    at ApiClient.get [90m(C:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\apiClient.ts:88:13[90m)[39m
+    at ConfigService.fetchConfig [90m(C:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\configService.ts:44:26[90m)[39m
+[Baseel SDK] [DEBUG] Response status: 200 OK
+[Baseel SDK] [DEBUG] ConfigService: Received response from backend, validating schema...
+[Baseel SDK] [INFO] ConfigService: Successfully fetched and validated configuration for appId my-custom-app
+[Baseel SDK] [INFO] SDK initialization completed successfully.
+[Baseel SDK] [DEBUG] getConsentStatus called: granted
+    at Module.bootstrap [90m(C:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\bootstrap.ts:49:27[90m)[39m
+
+    at [90mC:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\index.test.ts:422:7
+    at runTest (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:781:11)
+    at runSuite (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:909:15)
+    at runFiles (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:958:5)
+    at startTests (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:967:3) {
+  code: [32m'API_NETWORK_ERROR'[39m,
+  details: {
+    url: [32m'https://api.baseel.com/v1/configs/fetch-fail-app'[39m,
+    originalError: Error: Network Disconnected
+        at [90mC:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\index.test.ts:419:15
+        at mockCall (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/spy/dist/index.js:50:17)
+        at spy (file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4mtinyspy[24m/dist/index.js:42:80)
+        at ApiClient.get [90m(C:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\apiClient.ts:32:30[90m)[39m
+        at ConfigService.fetchConfig [90m(C:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\configService.ts:44:47[90m)[39m
+        at Module.bootstrap [90m(C:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\bootstrap.ts:49:47[90m)[39m
+        at Module.loadSdk [90m(C:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\index.ts:5:10[90m)[39m
+        at [90mC:\Users\rani.kumari\Desktop\Baseel-Office-Work\Consent-Manager\baseel-sdk\packages\loader\[39msrc\index.test.ts:422:20
+        at file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:135:14
+        at file:///C:/Users/rani.kumari/Desktop/Baseel-Office-Work/Consent-Manager/baseel-sdk/node_modules/[4m@vitest[24m/runner/dist/index.js:60:26
+  },
+  status: [90mundefined[39m
+}
+
+ [32m✓[39m src/index.test.ts [2m ([22m[2m27 tests[22m[2m)[22m[90m 98[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m27 passed[39m[22m[90m (27)[39m
+[2m   Start at [22m 14:31:07
+[2m   Duration [22m 1.95s[2m (transform 307ms, setup 0ms, collect 419ms, tests 98ms, environment 0ms, prepare 897ms)[22m
+

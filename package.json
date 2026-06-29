@@ -1,17 +1,22 @@
 {
   "name": "baseel-sdk-monorepo",
   "private": true,
+  "packageManager": "npm@11.11.0",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "test": "turbo test",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
+    "tsup": "^8.0.0",
+    "turbo": "^2.0.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   }
