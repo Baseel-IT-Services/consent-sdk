@@ -6,6 +6,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# Turbo cache (auto-generated, never commit)
+.turbo/
+**/.turbo/
+
 # Environment files
 .env
 .env.local

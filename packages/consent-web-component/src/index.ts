@@ -1,6 +1,7 @@
-export * from './api/index.js';
-export * from './component/index.js';
-export * from './renderer/index.js';
-export * from './theme/index.js';
-export * from './events/index.js';
-export * from './utils/index.js';
+import './register.js';
+
+export { BaseelConsent } from './component/index.js';
+export type { ComponentConfig, ComponentState, StateData } from './component/index.js';
+export { BASEEL_EVENTS, dispatchConsentGranted, dispatchConsentDenied, dispatchConsentError } from './events/index.js';
+export type { ConsentGrantedDetail, ConsentDeniedDetail } from './events/index.js';
+export { ELEMENT_TAG, ATTR, DEFAULT_API_BASE_URL } from './constants.js';
