@@ -1,9 +1,6 @@
 import { ATTR, ELEMENT_TAG, DEFAULT_API_BASE_URL } from '../constants.js';
 import { StateManager } from './StateManager.js';
 import { Renderer } from './Renderer.js';
-import { getConsentScreen, submitConsent } from '../api/consent.js';
-import type { SubmitPurpose } from '../api/consent.js';
-import { dispatchConsentGranted, dispatchConsentDenied, dispatchConsentError } from '../events/events.js';
 
 export interface ComponentConfig {
   publicKey: string;
@@ -19,36 +16,6 @@ export class BaseelConsent extends HTMLElement {
 
   private stateManager = new StateManager();
   private renderer: Renderer | null = null;
-  private fetchGen = 0;
-
-  private handleAccept = (e: Event): void => {
-    const state = this.stateManager.getState();
-    const config = this.getConfig();
-    if (!config || !state.template) return;
-
-    const purposes: SubmitPurpose[] = (e as CustomEvent).detail?.purposes ?? [];
-
-    this.stateManager.set('submitting');
-
-    submitConsent(state.template.uuid, config.sessionToken, purposes, config.apiBaseUrl)
-      .then(result => {
-        this.stateManager.set('success');
-        dispatchConsentGranted(this, {
-          consentId: result.consentId,
-          purposes: purposes.filter(p => p.accepted).map(p => p.uuid),
-          timestamp: Date.now(),
-        });
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : 'Submission failed.';
-        this.stateManager.set('error', { error: message });
-        dispatchConsentError(this, message);
-      });
-  };
-
-  private handleDeny = (): void => {
-    dispatchConsentDenied(this, { timestamp: Date.now() });
-  };
 
   constructor() {
     super();
@@ -59,14 +26,10 @@ export class BaseelConsent extends HTMLElement {
     this.renderer = new Renderer(this.shadowRoot!);
     this.stateManager.onChange(data => this.renderer!.render(data));
     this.renderer.render(this.stateManager.getState());
-    this.shadowRoot!.addEventListener('baseel:internal:accept', this.handleAccept);
-    this.shadowRoot!.addEventListener('baseel:internal:deny', this.handleDeny);
     this.bootstrap();
   }
 
   disconnectedCallback(): void {
-    this.shadowRoot!.removeEventListener('baseel:internal:accept', this.handleAccept);
-    this.shadowRoot!.removeEventListener('baseel:internal:deny', this.handleDeny);
     this.renderer = null;
   }
 
@@ -107,17 +70,6 @@ export class BaseelConsent extends HTMLElement {
     }
 
     this.stateManager.set('loading');
-    const gen = ++this.fetchGen;
-
-    getConsentScreen(config.screenId, config.publicKey, config.sessionToken, config.apiBaseUrl)
-      .then(template => {
-        if (gen !== this.fetchGen) return;
-        this.stateManager.set('ready', { template });
-      })
-      .catch((err: unknown) => {
-        if (gen !== this.fetchGen) return;
-        const message = err instanceof Error ? err.message : 'Failed to load consent screen.';
-        this.stateManager.set('error', { error: message });
-      });
+    // API call wired in Milestone 3
   }
 }

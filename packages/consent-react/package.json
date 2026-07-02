@@ -1,8 +1,8 @@
 {
   "name": "@baseel/consent-react",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
+  "files": ["dist"],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,8 +18,12 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@baseel/consent-web-component": "*",
-    "@baseel/types": "*"
+    "@baseel/consent-web-component": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
