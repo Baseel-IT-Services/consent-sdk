@@ -1,12 +1,20 @@
 import type { WidgetTemplate } from '@baseel/types';
 
+export interface SubmitPii {
+  piiUuid: string;
+  required: boolean;
+}
+
 export interface SubmitPurpose {
-  uuid: string;
-  accepted: boolean;
+  purposeUuid: string;
+  piis: SubmitPii[];
 }
 
 export async function submitConsent(
   templateUuid: string,
+  templateVersion: string | number,
+  languageCode: string,
+  publicKey: string,
   sessionToken: string,
   purposes: SubmitPurpose[],
   apiBaseUrl: string
@@ -26,8 +34,9 @@ export async function submitConsent(
         'Content-Type': 'application/json',
         Accept: 'application/json',
         Authorization: `Bearer ${token}`,
+        'X-Publishable-Key': publicKey,
       },
-      body: JSON.stringify({ templateUuid, purposes }),
+      body: JSON.stringify({ templateUuid, templateVersion, languageCode, purposes }),
     });
   } catch {
     throw new Error('Network error: unable to reach the consent server.');
@@ -77,15 +86,40 @@ export async function getConsentScreen(
   const data = await response.json();
 
   // Spring Boot wraps the template: { template: {...} } or returns it directly
-  const raw: WidgetTemplate = data.template ?? data;
+  const raw: any = data.template ?? data;
 
   if (!raw?.uuid) {
     throw new Error('Invalid response: consent screen data is missing.');
   }
 
+  // Normalize purposes: API returns uuid, submit expects purposeUuid/piiUuid
+  const purposes = (raw.purposes ?? []).map((p: any) => ({
+    ...p,
+    purposeUuid: p.purposeUuid ?? p.uuid,
+    piis: (p.piis ?? []).map((pii: any) => ({
+      ...pii,
+      piiUuid: pii.piiUuid ?? pii.uuid,
+    })),
+  }));
+
+  // Normalize translations: API may return an array; widget expects Record<languageCode, translation>
+  let translations = raw.translations;
+  if (Array.isArray(translations)) {
+    translations = Object.fromEntries(
+      (translations as any[]).map((t: any) => [t.languageCode ?? t.code, t])
+    );
+  }
+
+  // Normalize privacy notice: handle different possible field names from API
+  const notice = raw.notice ?? raw.privacyNotice ?? raw.privacy_notice ?? null;
+
   return {
     ...raw,
-    // Normalize logoUrl — may live at top level or inside branding
-    logoUrl: raw.logoUrl ?? (raw as any).branding?.logoUrl,
-  };
+    logoUrl: raw.logoUrl ?? raw.branding?.logoUrl,
+    legalEntityName: raw.legalEntityName ?? raw.legalEntity?.name,
+    purposes,
+    translations: translations ?? undefined,
+    notice,
+    privacyNotice: undefined,
+  } as WidgetTemplate;
 }
