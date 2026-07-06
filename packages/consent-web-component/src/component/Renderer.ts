@@ -141,6 +141,8 @@ const STYLES = `
   .badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
   .badge-required { background: #fee2e2; color: var(--baseel-danger); }
   .badge-optional { background: #e0f2fe; color: #0369a1; }
+  .pii-badge-col { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+  .pii-expires { font-size: 11px; color: var(--baseel-muted); white-space: nowrap; }
 
   /* ── Footer / actions ── */
   .footer-section { padding: 16px 24px; }
@@ -270,21 +272,21 @@ export class Renderer {
     const orgHtml = legalEntityName
       ? `<span class="org-name">${legalEntityName}</span>` : '';
 
-    // ── Language selector ──
+    // ── Language selector — always visible ──
     const langs: { code: string; label: string }[] = [{ code: 'en', label: 'English' }];
     if (translations) {
       Object.keys(translations).forEach(code => {
         if (code !== 'en') langs.push({ code, label: LANG_NAMES[code] ?? code.toUpperCase() });
       });
     }
-    const langSelectorHtml = langs.length > 1 ? `
+    const langSelectorHtml = `
       <div class="lang-row">
         <span class="lang-icon">🌐</span>
         <span class="lang-label">Language</span>
         <select class="lang-select" data-lang-select>
           ${langs.map(l => `<option value="${l.code}">${l.label}</option>`).join('')}
         </select>
-      </div>` : '';
+      </div>`;
 
     // ── Content ──
     const contentHtml = (header || body) ? `
@@ -296,15 +298,13 @@ export class Renderer {
     // ── Purposes ──
     const purposesHtml = this.renderPurposes(purposes);
 
-    // ── Footer ──
+    // ── Footer — Privacy Notice link always shown ──
     const noticeObj = notice ?? privacyNotice;
-    const privacyLinkHtml = noticeObj
-      ? ` <button class="privacy-link" data-privacy-toggle>${noticeObj.title ?? 'Privacy Notice'}</button>` : '';
-    const footerText = footer ?? '';
-    const footerHtml = (footerText || privacyLinkHtml) ? `
-      <p class="footer-text" data-field="footer">${footerText}${privacyLinkHtml}</p>` : '';
+    const privacyLinkHtml = ` <button class="privacy-link" data-privacy-toggle>${noticeObj?.title ?? 'Privacy Notice'}</button>`;
+    const footerText = footer ?? 'i agree the term and condition';
+    const footerHtml = `<p class="footer-text" data-field="footer">${footerText}${privacyLinkHtml}</p>`;
 
-    // ── Privacy Notice Modal ──
+    // ── Privacy Notice Modal (only rendered when notice data exists) ──
     const modalHtml = noticeObj ? `
       <div class="modal-overlay" data-privacy-modal hidden>
         <div class="modal-box">
@@ -315,7 +315,7 @@ export class Renderer {
           <div class="modal-body">${noticeObj.content}</div>
           ${(noticeObj.effectiveFrom || noticeObj.effectiveTo) ? `
           <div class="modal-footer">
-            ${noticeObj.effectiveFrom ? `Effective from ${noticeObj.effectiveFrom}` : ''}
+            ${noticeObj.effectiveFrom ? `From ${noticeObj.effectiveFrom}` : ''}
             ${noticeObj.effectiveTo ? ` · until ${noticeObj.effectiveTo}` : ''}
           </div>` : ''}
         </div>
@@ -341,8 +341,7 @@ export class Renderer {
       <div class="footer-section">
         ${footerHtml}
         <div class="actions">
-          <button class="btn btn-secondary" data-action="deny">Decline</button>
-          <button class="btn btn-primary" data-action="accept">Accept</button>
+          <button class="btn btn-primary" data-action="accept">Agree &amp; Save</button>
         </div>
       </div>
       ${modalHtml}
@@ -363,7 +362,10 @@ export class Renderer {
               <span class="pii-title">${piiLabel}</span>
               ${pii.description ? `<span class="pii-desc">${pii.description}</span>` : ''}
             </div>
-            <span class="badge ${pii.required ? 'badge-required' : 'badge-optional'}">${pii.required ? 'Required' : 'Optional'}</span>
+            <div class="pii-badge-col">
+              <span class="badge ${pii.required ? 'badge-required' : 'badge-optional'}">${pii.required ? 'Required' : 'Optional'}</span>
+              ${pii.expiresAt ? `<span class="pii-expires">📅 ${pii.expiresAt.slice(0, 10)}</span>` : ''}
+            </div>
           </div>`;
       }).join('');
       return `
