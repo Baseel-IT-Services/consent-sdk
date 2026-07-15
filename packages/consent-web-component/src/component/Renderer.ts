@@ -1,5 +1,6 @@
 import type { StateData } from './StateManager.js';
-import type { WidgetTemplate, WidgetPurposeItem } from '@baseel/types';
+import type { WidgetTemplate, WidgetPurposeItem, WidgetPrivacyNotice } from '@baseel/types';
+import { translateText, stripHtml } from '../utils/translate.js';
 
 const LANG_NAMES: Record<string, string> = {
   en: 'English',
@@ -35,13 +36,26 @@ const STYLES = `
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  .baseel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 16px;
+  }
+
   .widget {
     background: var(--baseel-bg);
     border: 1px solid var(--baseel-border);
     border-radius: var(--baseel-radius);
     max-width: 520px;
     width: 100%;
-    overflow: hidden;
+    max-height: 90vh;
+    overflow-x: hidden;
+    overflow-y: auto;
     position: relative;
   }
 
@@ -195,10 +209,26 @@ const STYLES = `
     padding: 12px 20px; border-top: 1px solid var(--baseel-border);
     font-size: 11px; color: var(--baseel-muted); flex-shrink: 0;
   }
+  .modal-title-row { display: flex; align-items: center; gap: 8px; }
+  .modal-version {
+    font-size: 11px; font-weight: 500; color: var(--baseel-muted);
+    background: #f3f4f6; padding: 2px 8px; border-radius: 10px;
+  }
+  .footer-agree { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+  .footer-agree input[type="checkbox"] {
+    width: 16px; height: 16px; margin-top: 1px; flex-shrink: 0;
+    accent-color: var(--baseel-primary); cursor: pointer;
+  }
+  .footer-agree label { font-size: 12px; color: var(--baseel-muted); line-height: 1.5; cursor: pointer; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:disabled:hover { opacity: 0.45; }
 `;
+
+const AUTO_CLOSE_DELAY_MS = 1200;
 
 export class Renderer {
   private root: ShadowRoot;
+  private closeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(shadowRoot: ShadowRoot) {
     this.root = shadowRoot;
@@ -208,8 +238,16 @@ export class Renderer {
   }
 
   render(data: StateData): void {
-    const existing = this.root.querySelector('.widget');
+    if (this.closeTimer) {
+      clearTimeout(this.closeTimer);
+      this.closeTimer = null;
+    }
+
+    const existing = this.root.querySelector('.baseel-overlay');
     if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'baseel-overlay';
 
     const widget = document.createElement('div');
     widget.className = 'widget';
@@ -233,13 +271,24 @@ export class Renderer {
           this.attachFormHandlers(widget);
           this.attachLanguageHandler(widget, data.template);
           this.attachPrivacyHandler(widget);
+          this.attachNoticeLanguageHandler(widget, data.template.notice ?? data.template.privacyNotice);
         } else {
           widget.innerHTML = this.error('Template data is missing.');
         }
         break;
     }
 
-    this.root.appendChild(widget);
+    overlay.appendChild(widget);
+    this.root.appendChild(overlay);
+
+    // Consent has been granted and submitted — the dialog closes itself
+    // rather than waiting for the host page to remove it.
+    if (data.state === 'success') {
+      this.closeTimer = setTimeout(() => {
+        overlay.remove();
+        this.closeTimer = null;
+      }, AUTO_CLOSE_DELAY_MS);
+    }
   }
 
   private loading(message: string): string {
@@ -254,10 +303,16 @@ export class Renderer {
     return `<div class="center-state"><span class="success-icon">✓</span><p class="success-msg">Your preferences have been saved.</p></div>`;
   }
 
+  private langOptions(): string {
+    return Object.entries(LANG_NAMES)
+      .map(([code, label]) => `<option value="${code}">${label}</option>`)
+      .join('');
+  }
+
   private ready(template: WidgetTemplate): string {
     const {
       logoUrl, title, status, version, legalEntityName,
-      header, body, footer, purposes, translations,
+      header, body, footer, purposes,
       notice, privacyNotice,
     } = template;
 
@@ -272,19 +327,14 @@ export class Renderer {
     const orgHtml = legalEntityName
       ? `<span class="org-name">${legalEntityName}</span>` : '';
 
-    // ── Language selector — always visible ──
-    const langs: { code: string; label: string }[] = [{ code: 'en', label: 'English' }];
-    if (translations) {
-      Object.keys(translations).forEach(code => {
-        if (code !== 'en') langs.push({ code, label: LANG_NAMES[code] ?? code.toUpperCase() });
-      });
-    }
+    // ── Language selector — always show all supported languages ──
+    const langOptionsHtml = this.langOptions();
     const langSelectorHtml = `
       <div class="lang-row">
         <span class="lang-icon">🌐</span>
         <span class="lang-label">Language</span>
         <select class="lang-select" data-lang-select>
-          ${langs.map(l => `<option value="${l.code}">${l.label}</option>`).join('')}
+          ${langOptionsHtml}
         </select>
       </div>`;
 
@@ -298,21 +348,35 @@ export class Renderer {
     // ── Purposes ──
     const purposesHtml = this.renderPurposes(purposes);
 
-    // ── Footer — Privacy Notice link always shown ──
+    // ── Footer — checkbox agreement + Privacy Notice link ──
     const noticeObj = notice ?? privacyNotice;
-    const privacyLinkHtml = ` <button class="privacy-link" data-privacy-toggle>${noticeObj?.title ?? 'Privacy Notice'}</button>`;
-    const footerText = footer ?? 'i agree the term and condition';
-    const footerHtml = `<p class="footer-text" data-field="footer">${footerText}${privacyLinkHtml}</p>`;
+    const privacyLinkHtml = `<button class="privacy-link" data-privacy-toggle data-field="notice-link">${noticeObj?.title ?? 'Privacy Notice'}</button>`;
+    const footerText = footer ?? 'I agree to the terms and conditions';
+    const footerHtml = `
+      <div class="footer-agree">
+        <input type="checkbox" id="baseel-agree-check" data-agree-check />
+        <label for="baseel-agree-check"><span data-field="footer">${footerText}</span> ${privacyLinkHtml}</label>
+      </div>`;
 
     // ── Privacy Notice Modal (only rendered when notice data exists) ──
     const modalHtml = noticeObj ? `
       <div class="modal-overlay" data-privacy-modal hidden>
         <div class="modal-box">
           <div class="modal-header">
-            <span class="modal-title">${noticeObj.title}</span>
+            <div class="modal-title-row">
+              <span class="modal-title" data-field="notice-title">${noticeObj.title}</span>
+              ${noticeObj.version ? `<span class="modal-version">v${noticeObj.version}</span>` : ''}
+            </div>
             <button class="modal-close" data-privacy-close>×</button>
           </div>
-          <div class="modal-body">${noticeObj.content}</div>
+          <div class="lang-row">
+            <span class="lang-icon">🌐</span>
+            <span class="lang-label">Language</span>
+            <select class="lang-select" data-notice-lang-select>
+              ${this.langOptions()}
+            </select>
+          </div>
+          <div class="modal-body" data-field="notice-content">${noticeObj.content}</div>
           ${(noticeObj.effectiveFrom || noticeObj.effectiveTo) ? `
           <div class="modal-footer">
             ${noticeObj.effectiveFrom ? `From ${noticeObj.effectiveFrom}` : ''}
@@ -341,7 +405,7 @@ export class Renderer {
       <div class="footer-section">
         ${footerHtml}
         <div class="actions">
-          <button class="btn btn-primary" data-action="accept">Agree &amp; Save</button>
+          <button class="btn btn-primary" data-action="accept" disabled>Agree &amp; Save</button>
         </div>
       </div>
       ${modalHtml}
@@ -383,6 +447,14 @@ export class Renderer {
   }
 
   private attachFormHandlers(widget: HTMLElement): void {
+    const agreeCheck = widget.querySelector<HTMLInputElement>('[data-agree-check]');
+    const acceptBtn = widget.querySelector<HTMLButtonElement>('[data-action="accept"]');
+    if (agreeCheck && acceptBtn) {
+      agreeCheck.addEventListener('change', () => {
+        acceptBtn.disabled = !agreeCheck.checked;
+      });
+    }
+
     widget.querySelector('[data-action="accept"]')?.addEventListener('click', () => {
       const purposeBoxes = widget.querySelectorAll<HTMLInputElement>('input[type="checkbox"][name="purpose"]');
       const purposes = Array.from(purposeBoxes).map(cb => {
@@ -409,17 +481,122 @@ export class Renderer {
 
   private attachLanguageHandler(widget: HTMLElement, template: WidgetTemplate): void {
     const select = widget.querySelector<HTMLSelectElement>('[data-lang-select]');
-    if (!select || !template.translations) return;
+    if (!select) return;
 
-    select.addEventListener('change', () => {
-      const lang = select.value;
-      const t = lang !== 'en' ? template.translations![lang] : null;
+    const original = {
+      header: template.header ?? '',
+      body: template.body ?? '',
+      footer: template.footer ?? 'I agree to the terms and conditions',
+    };
 
+    type Translated = typeof original;
+
+    // Cache resolved translations per language so re-selecting a language is instant.
+    const cache = new Map<string, Translated>([['en', original]]);
+
+    const applyText = (t: Translated) => {
       const headerEl = widget.querySelector<HTMLElement>('[data-field="header"]');
       const bodyEl = widget.querySelector<HTMLElement>('[data-field="body"]');
+      const footerEl = widget.querySelector<HTMLElement>('[data-field="footer"]');
 
-      if (headerEl) headerEl.textContent = t ? t.header : (template.header ?? '');
-      if (bodyEl) bodyEl.textContent = t ? t.body : (template.body ?? '');
+      if (headerEl) headerEl.textContent = t.header;
+      if (bodyEl) bodyEl.textContent = t.body;
+      if (footerEl) footerEl.textContent = t.footer;
+    };
+
+    // Resolves header/body/footer from the backend translation record when available,
+    // falling back to live Google Translate — the same mechanism used in the CMP platform
+    // and dummy app.
+    const resolveTranslation = async (lang: string): Promise<Translated> => {
+      const stored = template.translations?.[lang];
+      if (stored) return { header: stored.header, body: stored.body, footer: stored.footer };
+
+      const [header, body, footer] = await Promise.all([
+        translateText(original.header, lang),
+        translateText(original.body, lang),
+        translateText(original.footer, lang),
+      ]);
+      return { header, body, footer };
+    };
+
+    select.addEventListener('change', async () => {
+      const lang = select.value;
+
+      const cached = cache.get(lang);
+      if (cached) {
+        applyText(cached);
+        return;
+      }
+
+      select.disabled = true;
+      try {
+        const t = await resolveTranslation(lang);
+        cache.set(lang, t);
+        applyText(t);
+      } catch {
+        applyText(original);
+        select.value = 'en';
+      } finally {
+        select.disabled = false;
+      }
+    });
+  }
+
+  private attachNoticeLanguageHandler(widget: HTMLElement, noticeObj: WidgetPrivacyNotice | undefined): void {
+    const select = widget.querySelector<HTMLSelectElement>('[data-notice-lang-select]');
+    if (!select || !noticeObj) return;
+
+    const originalContentHtml = noticeObj.content;
+    const original = {
+      title: noticeObj.title,
+      content: stripHtml(noticeObj.content),
+    };
+
+    type Translated = typeof original;
+
+    // Cache resolved translations per language so re-selecting a language is instant.
+    // Independent from the main widget language selector — the notice can be read in a
+    // different language than the header/body/footer content.
+    const cache = new Map<string, Translated>([['en', original]]);
+
+    const applyText = (t: Translated, lang: string) => {
+      const titleEl = widget.querySelector<HTMLElement>('[data-field="notice-title"]');
+      const linkEl = widget.querySelector<HTMLElement>('[data-field="notice-link"]');
+      const contentEl = widget.querySelector<HTMLElement>('[data-field="notice-content"]');
+
+      if (titleEl) titleEl.textContent = t.title;
+      if (linkEl) linkEl.textContent = t.title || 'Privacy Notice';
+      if (contentEl) {
+        // 'en' keeps the original rich HTML; translated text is plain, so swap to textContent.
+        if (lang === 'en') contentEl.innerHTML = originalContentHtml;
+        else contentEl.textContent = t.content;
+      }
+    };
+
+    select.addEventListener('change', async () => {
+      const lang = select.value;
+
+      const cached = cache.get(lang);
+      if (cached) {
+        applyText(cached, lang);
+        return;
+      }
+
+      select.disabled = true;
+      try {
+        const [title, content] = await Promise.all([
+          translateText(original.title, lang),
+          translateText(original.content, lang),
+        ]);
+        const t = { title, content };
+        cache.set(lang, t);
+        applyText(t, lang);
+      } catch {
+        applyText(original, 'en');
+        select.value = 'en';
+      } finally {
+        select.disabled = false;
+      }
     });
   }
 
