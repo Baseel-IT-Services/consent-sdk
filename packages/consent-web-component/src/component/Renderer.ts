@@ -457,16 +457,20 @@ export class Renderer {
 
     widget.querySelector('[data-action="accept"]')?.addEventListener('click', () => {
       const purposeBoxes = widget.querySelectorAll<HTMLInputElement>('input[type="checkbox"][name="purpose"]');
-      const purposes = Array.from(purposeBoxes).map(cb => {
-        const piiBoxes = widget.querySelectorAll<HTMLInputElement>(
-          `input[type="checkbox"][name="pii"][data-purpose="${cb.value}"]`
-        );
-        const piis = Array.from(piiBoxes).map(pii => ({
-          piiUuid: pii.value,
-          required: pii.dataset.required === 'true',
-        }));
-        return { purposeUuid: cb.value, piis };
-      });
+      const purposes = Array.from(purposeBoxes)
+        .filter(cb => cb.checked)
+        .map(cb => {
+          const piiBoxes = widget.querySelectorAll<HTMLInputElement>(
+            `input[type="checkbox"][name="pii"][data-purpose="${cb.value}"]`
+          );
+          const piis = Array.from(piiBoxes)
+            .filter(pii => pii.checked)
+            .map(pii => ({
+              piiUuid: pii.value,
+              required: pii.dataset.required === 'true',
+            }));
+          return { purposeUuid: cb.value, piis };
+        });
       widget.dispatchEvent(new CustomEvent('baseel:internal:accept', {
         detail: { purposes },
         bubbles: true,

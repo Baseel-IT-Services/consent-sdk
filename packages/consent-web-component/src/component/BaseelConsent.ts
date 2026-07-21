@@ -1,5 +1,6 @@
 import { ATTR, ELEMENT_TAG, DEFAULT_API_BASE_URL } from '../constants.js';
 import { StateManager } from './StateManager.js';
+import type { StateData } from './StateManager.js';
 import { Renderer } from './Renderer.js';
 import { getConsentScreen, submitConsent } from '../api/consent.js';
 import type { SubmitPurpose } from '../api/consent.js';
@@ -12,7 +13,13 @@ export interface ComponentConfig {
   apiBaseUrl: string;
 }
 
-export class BaseelConsent extends HTMLElement {
+// Falls back to a plain class when `HTMLElement` doesn't exist (SSR/Node) so that merely
+// importing this module never throws — only actually defining/using the custom element
+// requires a real browser, which register.ts's `customElements` guard already handles.
+const HTMLElementBase: typeof HTMLElement =
+  typeof HTMLElement !== 'undefined' ? HTMLElement : (class {} as unknown as typeof HTMLElement);
+
+export class BaseelConsent extends HTMLElementBase {
   static get observedAttributes(): string[] {
     return [ATTR.PUBLIC_KEY, ATTR.SESSION_TOKEN, ATTR.SCREEN_ID, ATTR.API_BASE_URL];
   }
@@ -20,6 +27,7 @@ export class BaseelConsent extends HTMLElement {
   private stateManager = new StateManager();
   private renderer: Renderer | null = null;
   private fetchGen = 0;
+  private onStateChange = (data: StateData): void => this.renderer?.render(data);
 
   private handleAccept = (e: Event): void => {
     const purposes = (e as CustomEvent<{ purposes: SubmitPurpose[] }>).detail.purposes;
@@ -40,7 +48,7 @@ export class BaseelConsent extends HTMLElement {
 
   connectedCallback(): void {
     this.renderer = new Renderer(this.shadowRoot!);
-    this.stateManager.onChange(data => this.renderer!.render(data));
+    this.stateManager.onChange(this.onStateChange);
     this.renderer.render(this.stateManager.getState());
     this.shadowRoot!.addEventListener('baseel:internal:accept', this.handleAccept);
     this.shadowRoot!.addEventListener('baseel:internal:deny', this.handleDeny);
@@ -48,6 +56,7 @@ export class BaseelConsent extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.stateManager.offChange(this.onStateChange);
     this.shadowRoot!.removeEventListener('baseel:internal:accept', this.handleAccept);
     this.shadowRoot!.removeEventListener('baseel:internal:deny', this.handleDeny);
     this.renderer = null;

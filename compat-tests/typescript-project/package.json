@@ -1,0 +1,16 @@
+{
+  "name": "compat-test-typescript-project",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Standalone TypeScript consumer compatibility test for @baseel/consent-web-component",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@baseel/consent-web-component": "file:../../packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

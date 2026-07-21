@@ -1,0 +1,12 @@
+{
+  "name": "vanilla-html-compat-test",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Bundler-free, framework-free compat test harness for @baseel/consent-web-component",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@baseel/consent-web-component": "file:../../packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz"
+  }
+}

@@ -1,0 +1,19 @@
+<h1>Baseel Consent Manager - Angular Compat Test</h1>
+
+<button id="toggle-btn" (click)="toggleWidget()">{{ showWidget ? 'Unmount' : 'Mount' }} Widget</button>
+<button id="remount-btn" (click)="remount()">Remount</button>
+
+<div id="log">
+  <p>Granted event count: {{ grantedCount }}</p>
+  <p *ngIf="lastDetail">Last detail: {{ lastDetail }}</p>
+</div>
+
+<div *ngIf="showWidget">
+  <baseel-consent
+    #consentEl
+    public-key="test-public-key"
+    session-token="test-session-token"
+    screen-id="screen-1"
+    api-base-url="http://localhost:4794">
+  </baseel-consent>
+</div>

@@ -1,0 +1,2 @@
+Mock consent API listening on http://localhost:4792 (TEMPLATE_DELAY_MS=0)
+[mock-server] consent submit body: {"templateUuid":"tmpl-1","templateVersion":"1.0","languageCode":"en","purposes":[{"purposeUuid":"purpose-1","piis":[{"piiUuid":"pii-1","required":true}]}]}

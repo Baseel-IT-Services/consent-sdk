@@ -26,4 +26,8 @@ export class StateManager {
   onChange(listener: Listener): void {
     this.listeners.push(listener);
   }
+
+  offChange(listener: Listener): void {
+    this.listeners = this.listeners.filter(fn => fn !== listener);
+  }
 }

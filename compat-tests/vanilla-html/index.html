@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Baseel Consent Manager — Vanilla HTML Compat Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!--
+    Import map so the bare specifier `@baseel/consent-web-component` resolves
+    to the file actually installed by `npm install` (via the local tgz
+    dependency), with ZERO bundler involved. server.js serves node_modules
+    statically for exactly this purpose.
+  -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@baseel/consent-web-component": "/node_modules/@baseel/consent-web-component/dist/index.js"
+      }
+    }
+  </script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: 20px; }
+    #controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    button { padding: 8px 14px; cursor: pointer; }
+    #log { border: 1px solid #ccc; border-radius: 8px; padding: 12px; min-height: 120px; font-family: monospace; font-size: 12px; white-space: pre-wrap; background: #fafafa; }
+    #mount-point { min-height: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Baseel Consent Manager — Vanilla HTML / No-Bundler Compat Test</h1>
+
+  <div id="controls">
+    <button id="btn-remove">Remove &lt;baseel-consent&gt;</button>
+    <button id="btn-add">Re-add &lt;baseel-consent&gt;</button>
+    <button id="btn-change-screen">Change screen-id (re-fetch/re-render test)</button>
+    <button id="btn-force-error">Add element pointed at forceError=1 endpoint</button>
+    <button id="btn-missing-attr">Add element missing screen-id (error path)</button>
+    <button id="btn-dynamic-import">Dynamic import() the module</button>
+    <button id="btn-dispatch-raw">Dispatch raw internal event at detached node</button>
+    <button id="btn-mount-loop">Mount/unmount 20x (leak sanity check)</button>
+  </div>
+
+  <div id="mount-point">
+    <baseel-consent
+      id="main-el"
+      public-key="pk_test"
+      session-token="tok_test"
+      screen-id="scr_test"
+      api-base-url="http://localhost:4787">
+    </baseel-consent>
+  </div>
+
+  <h2>Event log</h2>
+  <div id="log"></div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+/**
+ * NEGATIVE TEST CASES — kept as `.ts.txt` so it is never picked up by
+ * tsconfig.json's `include` (["src/index.ts"]) and never affects the real
+ * `tsc --noEmit` run. To verify these actually fail, temporarily copy this
+ * file's contents into a `.ts` file and run `npx tsc --noEmit` on it with the
+ * same compilerOptions as tsconfig.json — each block below is expected to
+ * produce a compiler error. Results of doing so are recorded in REPORT.md.
+ */
+import {
+  dispatchConsentGranted,
+  dispatchConsentDenied,
+  BASEEL_EVENTS,
+} from '@baseel/consent-web-component';
+import type { StateData, ConsentGrantedDetail } from '@baseel/consent-web-component';
+
+const el = document.createElement('div');
+
+// 1) Missing required `purposes: string[]` field on ConsentGrantedDetail.
+dispatchConsentGranted(el, { timestamp: Date.now() });
+
+// 2) Wrong type for `timestamp` (string instead of number).
+dispatchConsentDenied(el, { timestamp: 'not-a-number' });
+
+// 3) Invalid ComponentState literal ('pending' is not a member of the union).
+const badState: StateData = { state: 'pending' };
+
+// 4) BASEEL_EVENTS member assigned to the wrong literal-typed variable
+//    (proves CONSENT_GRANTED/CONSENT_DENIED are distinct literal types,
+//    not both widened to `string`).
+const wrongEventName: 'baseel:consent-granted' = BASEEL_EVENTS.CONSENT_DENIED;
+
+// 5) purposes with wrong element type (number[] instead of string[]).
+const badDetail: ConsentGrantedDetail = {
+  purposes: [1, 2, 3],
+  timestamp: Date.now(),
+};
+
+void [badState, wrongEventName, badDetail];

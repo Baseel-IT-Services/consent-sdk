@@ -1,0 +1,55 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Baseel Consent Astro Compat Test</title>
+	</head>
+	<body>
+		<h1>Baseel Consent Astro Compat Test</h1>
+		<p>SSR/islands compat check: plain custom element loaded via a bare Astro &lt;script&gt; tag, no client:* directive.</p>
+
+		<div id="mount-point">
+			<baseel-consent
+				id="main-el"
+				public-key="pk_test"
+				session-token="tok_test"
+				screen-id="scr_test"
+				api-base-url="http://localhost:4793"
+			></baseel-consent>
+		</div>
+
+		<pre id="event-log" style="border:1px solid #ccc; padding:8px; min-height:80px; white-space:pre-wrap;"></pre>
+
+		<script>
+			// Astro processes/bundles this script and ships it client-side once,
+			// automatically de-duped across the page — no client:* directive needed
+			// since <baseel-consent> is a plain custom element, not a framework island.
+			import '@baseel/consent-web-component';
+
+			const logEl = document.getElementById('event-log')!;
+
+			function log(line: string) {
+				const ts = new Date().toISOString().split('T')[1]!.replace('Z', '');
+				logEl.textContent += `[${ts}] ${line}\n`;
+				console.log('[index.astro]', line);
+			}
+
+			document.addEventListener('baseel:consent-granted', (e) => {
+				log(`EVENT baseel:consent-granted detail=${JSON.stringify((e as CustomEvent).detail)}`);
+			});
+			document.addEventListener('baseel:consent-denied', (e) => {
+				log(`EVENT baseel:consent-denied detail=${JSON.stringify((e as CustomEvent).detail)}`);
+			});
+			document.addEventListener('baseel:consent-error', (e) => {
+				log(`EVENT baseel:consent-error detail=${JSON.stringify((e as CustomEvent).detail)}`);
+			});
+
+			log('inline script loaded, custom element registered.');
+		</script>
+	</body>
+</html>
