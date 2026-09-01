@@ -28,3 +28,6 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Compat-test lockfiles (auto-regenerable, unrelated to the published SDK)
+compat-tests/*/package-lock.json
