@@ -1,6 +1,6 @@
 {
   "name": "@baseel/consent-web-component",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",
@@ -12,9 +12,15 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@baseel/types": "0.1.0"
   }
 }

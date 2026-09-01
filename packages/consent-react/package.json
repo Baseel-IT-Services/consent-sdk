@@ -1,6 +1,6 @@
 {
   "name": "@baseel/consent-react",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",
@@ -13,13 +13,16 @@
       "default": "./dist/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@baseel/consent-web-component": "0.0.1"
+    "@baseel/consent-web-component": "0.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",
