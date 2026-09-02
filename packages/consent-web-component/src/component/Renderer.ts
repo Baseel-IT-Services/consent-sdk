@@ -1,5 +1,5 @@
 import type { StateData } from './StateManager.js';
-import type { WidgetTemplate, WidgetPurposeItem, WidgetPrivacyNotice } from '@baseel/types';
+import type { WidgetTemplate, WidgetPurposeItem, WidgetPrivacyNotice } from '@baseel-sdk/types';
 import { translateText, stripHtml } from '../utils/translate.js';
 
 const LANG_NAMES: Record<string, string> = {

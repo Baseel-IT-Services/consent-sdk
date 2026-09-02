@@ -1,5 +1,5 @@
 {
-  "name": "@baseel/consent-react",
+  "name": "@baseel-sdk/consent-react",
   "version": "0.1.0",
   "description": "React components for embedding Baseel consent screens (<BaseelConsent />)",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "react", "nextjs"],
@@ -35,7 +35,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@baseel/consent-web-component": "0.1.0"
+    "@baseel-sdk/consent-web-component": "0.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",

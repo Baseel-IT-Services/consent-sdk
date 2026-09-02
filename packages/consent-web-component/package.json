@@ -1,5 +1,5 @@
 {
-  "name": "@baseel/consent-web-component",
+  "name": "@baseel-sdk/consent-web-component",
   "version": "0.1.0",
   "description": "Framework-agnostic web component core for the Baseel Consent SDK",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "web-component", "custom-element"],
@@ -34,6 +34,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@baseel/types": "0.1.0"
+    "@baseel-sdk/types": "0.1.0"
   }
 }

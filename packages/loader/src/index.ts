@@ -1,4 +1,4 @@
-import { SdkConfig, BaseelSdkInstance } from '@baseel/types';
+import { SdkConfig, BaseelSdkInstance } from '@baseel-sdk/types';
 import { bootstrap } from './bootstrap.js';
 
 export function loadSdk(config: SdkConfig): Promise<BaseelSdkInstance> {

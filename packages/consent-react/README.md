@@ -1,16 +1,16 @@
-# @baseel/consent-react
+# @baseel-sdk/consent-react
 
 React components for embedding Baseel consent screens directly in your app —
 no iframe required.
 
 ```bash
-npm install @baseel/consent-react
+npm install @baseel-sdk/consent-react
 ```
 
 ```tsx
 "use client"; // required in Next.js App Router — this renders a custom element client-side
 
-import { BaseelConsent } from "@baseel/consent-react";
+import { BaseelConsent } from "@baseel-sdk/consent-react";
 
 export function Consent({ token }: { token: string }) {
   return (

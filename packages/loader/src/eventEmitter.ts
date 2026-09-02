@@ -1,4 +1,4 @@
-import { SdkEventMap } from '@baseel/types';
+import { SdkEventMap } from '@baseel-sdk/types';
 
 export class EventEmitter {
   private listeners: { [K in keyof SdkEventMap]?: Array<(data: SdkEventMap[K]) => void> } = {};

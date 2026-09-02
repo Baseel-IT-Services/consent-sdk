@@ -1,4 +1,4 @@
-import type { WidgetTemplate } from '@baseel/types';
+import type { WidgetTemplate } from '@baseel-sdk/types';
 
 export type ComponentState = 'loading' | 'ready' | 'submitting' | 'success' | 'error';
 

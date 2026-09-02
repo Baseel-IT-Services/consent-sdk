@@ -1,5 +1,5 @@
 {
-  "name": "@baseel/loader",
+  "name": "@baseel-sdk/loader",
   "version": "0.0.1",
   "description": "Lightweight script-tag loader for the Baseel Consent SDK",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "loader"],
@@ -26,7 +26,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@baseel/types": "0.1.0"
+    "@baseel-sdk/types": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

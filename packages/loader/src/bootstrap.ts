@@ -1,4 +1,4 @@
-import { SdkConfig, BaseelSdkInstance, ErrorCode } from '@baseel/types';
+import { SdkConfig, BaseelSdkInstance, ErrorCode } from '@baseel-sdk/types';
 import { validateConfig } from './configValidator.js';
 import { BaseelSdk } from './sdkInstance.js';
 import { InitializationError } from './errors.js';

@@ -10,20 +10,20 @@ short-lived session token; it does not implement any consent logic itself.
 
 | Package | Description |
 |---|---|
-| [`@baseel/types`](packages/types) | Shared TypeScript types used across the SDK |
-| [`@baseel/consent-web-component`](packages/consent-web-component) | Framework-agnostic core, ships a custom element |
-| [`@baseel/consent-react`](packages/consent-react) | React wrapper (`<BaseelConsent />`) around the web component |
-| [`@baseel/loader`](packages/loader) | Lightweight `<script>`-tag loader for non-bundler integrations |
+| [`@baseel-sdk/types`](packages/types) | Shared TypeScript types used across the SDK |
+| [`@baseel-sdk/consent-web-component`](packages/consent-web-component) | Framework-agnostic core, ships a custom element |
+| [`@baseel-sdk/consent-react`](packages/consent-react) | React wrapper (`<BaseelConsent />`) around the web component |
+| [`@baseel-sdk/loader`](packages/loader) | Lightweight `<script>`-tag loader for non-bundler integrations |
 
 ## Quick start (React / Next.js)
 
 ```bash
-npm install @baseel/consent-react
+npm install @baseel-sdk/consent-react
 ```
 
 ```tsx
 "use client";
-import { BaseelConsent } from "@baseel/consent-react";
+import { BaseelConsent } from "@baseel-sdk/consent-react";
 
 export function Consent({ token }: { token: string }) {
   return (
@@ -39,12 +39,12 @@ export function Consent({ token }: { token: string }) {
 ## Quick start (any other framework / vanilla HTML)
 
 ```bash
-npm install @baseel/consent-web-component
+npm install @baseel-sdk/consent-web-component
 ```
 
 ```html
 <script type="module">
-  import "@baseel/consent-web-component";
+  import "@baseel-sdk/consent-web-component";
 </script>
 
 <baseel-consent

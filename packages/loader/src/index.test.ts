@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { loadSdk, ConfigurationError, InitializationError, ConsentError, ApiError } from './index.js';
-import { ErrorCode } from '@baseel/types';
+import { ErrorCode } from '@baseel-sdk/types';
 import { Logger } from './logger.js';
 import { ApiClient } from './apiClient.js';
 import { ConfigService } from './configService.js';

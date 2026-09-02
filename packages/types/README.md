@@ -1,10 +1,10 @@
-# @baseel/types
+# @baseel-sdk/types
 
 Shared TypeScript types used across the Baseel Consent SDK
-(`@baseel/consent-web-component`, `@baseel/consent-react`, `@baseel/loader`).
+(`@baseel-sdk/consent-web-component`, `@baseel-sdk/consent-react`, `@baseel-sdk/loader`).
 
 ```bash
-npm install @baseel/types
+npm install @baseel-sdk/types
 ```
 
 You generally don't need to install this directly — it's a dependency of

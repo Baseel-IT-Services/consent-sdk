@@ -1,4 +1,4 @@
-import { LogLevel } from '@baseel/types';
+import { LogLevel } from '@baseel-sdk/types';
 
 export class Logger {
   private level: LogLevel;
