@@ -1,17 +1,32 @@
 {
   "name": "@baseel/loader",
   "version": "0.0.1",
-  "private": true,
-  "files": ["dist"],
+  "description": "Lightweight script-tag loader for the Baseel Consent SDK",
+  "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "loader"],
+  "author": "Baseel",
+  "license": "MIT",
+  "homepage": "https://github.com/baseel-sdk/baseel-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/baseel-sdk/baseel-sdk.git",
+    "directory": "packages/loader"
+  },
+  "bugs": {
+    "url": "https://github.com/baseel-sdk/baseel-sdk/issues"
+  },
+  "files": ["dist", "README.md"],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@baseel/types": "*"
+    "@baseel/types": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

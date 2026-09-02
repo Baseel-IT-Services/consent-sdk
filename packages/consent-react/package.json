@@ -1,8 +1,21 @@
 {
   "name": "@baseel/consent-react",
   "version": "0.1.0",
+  "description": "React components for embedding Baseel consent screens (<BaseelConsent />)",
+  "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "react", "nextjs"],
+  "author": "Baseel",
+  "license": "MIT",
+  "homepage": "https://github.com/baseel-sdk/baseel-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/baseel-sdk/baseel-sdk.git",
+    "directory": "packages/consent-react"
+  },
+  "bugs": {
+    "url": "https://github.com/baseel-sdk/baseel-sdk/issues"
+  },
   "type": "module",
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
