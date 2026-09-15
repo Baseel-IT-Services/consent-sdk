@@ -1,4 +1,4 @@
-import { SdkConfig, ErrorCode } from '@baseel-sdk/types';
+import { SdkConfig, ErrorCode } from '@baseel/types';
 import { ConfigurationError } from './errors.js';
 
 export function validateConfig(config: SdkConfig): Required<SdkConfig> {

@@ -1,8 +1,8 @@
 import { useRef, useCallback } from 'react';
 import type { CSSProperties } from 'react';
-import '@baseel-sdk/consent-web-component';
-import { BASEEL_EVENTS } from '@baseel-sdk/consent-web-component';
-import type { ConsentGrantedDetail, ConsentDeniedDetail } from '@baseel-sdk/consent-web-component';
+import '@baseel/consent-web-component';
+import { BASEEL_EVENTS } from '@baseel/consent-web-component';
+import type { ConsentGrantedDetail, ConsentDeniedDetail } from '@baseel/consent-web-component';
 
 declare global {
   namespace JSX {

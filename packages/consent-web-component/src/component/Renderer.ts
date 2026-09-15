@@ -1,5 +1,5 @@
 import type { StateData } from './StateManager.js';
-import type { WidgetTemplate, WidgetPurposeItem, WidgetPrivacyNotice } from '@baseel-sdk/types';
+import type { WidgetTemplate, WidgetPurposeItem, WidgetPrivacyNotice } from '@baseel/types';
 import { translateText, stripHtml } from '../utils/translate.js';
 
 const LANG_NAMES: Record<string, string> = {
@@ -75,6 +75,15 @@ const STYLES = `
   .error-msg { color: var(--baseel-danger); font-size: 14px; text-align: center; }
   .success-icon { font-size: 40px; }
   .success-msg { font-size: 15px; font-weight: 500; color: var(--baseel-success); }
+
+  /* ── Widget close button ── */
+  .widget-close-btn {
+    position: absolute; top: 12px; right: 12px; z-index: 1;
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; border-radius: 50%; font-size: 20px; line-height: 1;
+    color: var(--baseel-muted); cursor: pointer; transition: background 0.15s;
+  }
+  .widget-close-btn:hover { background: rgba(0,0,0,0.06); color: var(--baseel-text); }
 
   /* ── Widget header ── */
   .widget-header {
@@ -386,6 +395,7 @@ export class Renderer {
       </div>` : '';
 
     return `
+      <button class="widget-close-btn" data-action="deny" aria-label="Close">&times;</button>
       <div class="widget-header">
         ${logoHtml}
         <div class="header-meta">
@@ -405,6 +415,7 @@ export class Renderer {
       <div class="footer-section">
         ${footerHtml}
         <div class="actions">
+          <button class="btn btn-secondary" data-action="deny">Cancel</button>
           <button class="btn btn-primary" data-action="accept" disabled>Agree &amp; Save</button>
         </div>
       </div>
@@ -478,8 +489,10 @@ export class Renderer {
       }));
     });
 
-    widget.querySelector('[data-action="deny"]')?.addEventListener('click', () => {
-      widget.dispatchEvent(new CustomEvent('baseel:internal:deny', { bubbles: true, composed: true }));
+    widget.querySelectorAll('[data-action="deny"]').forEach((el) => {
+      el.addEventListener('click', () => {
+        widget.dispatchEvent(new CustomEvent('baseel:internal:deny', { bubbles: true, composed: true }));
+      });
     });
   }
 

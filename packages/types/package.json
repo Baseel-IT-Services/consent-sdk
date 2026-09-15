@@ -1,14 +1,14 @@
 {
-  "name": "@baseel-sdk/types",
+  "name": "@baseel/types",
   "version": "0.1.0",
   "description": "Shared TypeScript types for the Baseel Consent SDK",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "types"],
   "author": "Baseel",
   "license": "MIT",
-  "homepage": "https://github.com/baseel-sdk/baseel-sdk#readme",
+  "homepage": "https://github.com/Baseel-IT-Services/consent-sdk#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/baseel-sdk/baseel-sdk.git",
+    "url": "https://github.com/Baseel-IT-Services/consent-sdk.git",
     "directory": "packages/types"
   },
   "bugs": {

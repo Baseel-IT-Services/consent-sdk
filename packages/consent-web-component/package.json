@@ -1,14 +1,14 @@
 {
-  "name": "@baseel-sdk/consent-web-component",
+  "name": "@baseel/consent-web-component",
   "version": "0.1.0",
   "description": "Framework-agnostic web component core for the Baseel Consent SDK",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "web-component", "custom-element"],
   "author": "Baseel",
   "license": "MIT",
-  "homepage": "https://github.com/baseel-sdk/baseel-sdk#readme",
+  "homepage": "https://github.com/Baseel-IT-Services/consent-sdk#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/baseel-sdk/baseel-sdk.git",
+    "url": "https://github.com/Baseel-IT-Services/consent-sdk.git",
     "directory": "packages/consent-web-component"
   },
   "bugs": {
@@ -34,6 +34,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@baseel-sdk/types": "0.1.0"
+    "@baseel/types": "0.1.0"
   }
 }

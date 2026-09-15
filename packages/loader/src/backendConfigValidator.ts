@@ -1,4 +1,4 @@
-import { BackendSdkConfig, ErrorCode } from "@baseel-sdk/types";
+import { BackendSdkConfig, ErrorCode } from "@baseel/types";
 import { ApiError } from "./errors.js";
 
 export function validateBackendConfig(data: any): BackendSdkConfig {

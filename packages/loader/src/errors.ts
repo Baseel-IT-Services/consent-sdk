@@ -1,4 +1,4 @@
-import { ErrorCode } from '@baseel-sdk/types';
+import { ErrorCode } from '@baseel/types';
 
 export class BaseelError extends Error {
   public code: ErrorCode;

@@ -1,4 +1,4 @@
-import { ErrorCode } from "@baseel-sdk/types";
+import { ErrorCode } from "@baseel/types";
 import { Logger } from "./logger.js";
 import { ApiError } from "./errors.js";
 

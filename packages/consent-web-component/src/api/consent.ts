@@ -1,4 +1,4 @@
-import type { WidgetTemplate } from '@baseel-sdk/types';
+import type { WidgetTemplate } from '@baseel/types';
 
 export interface SubmitPii {
   piiUuid: string;

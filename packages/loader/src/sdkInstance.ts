@@ -1,4 +1,4 @@
-import { BaseelSdkInstance, SdkConfig, BackendSdkConfig, ConsentStatus, SdkEventMap, ConsentChangePayload } from '@baseel-sdk/types';
+import { BaseelSdkInstance, SdkConfig, BackendSdkConfig, ConsentStatus, SdkEventMap, ConsentChangePayload } from '@baseel/types';
 import { EventEmitter } from './eventEmitter.js';
 import { ConsentError } from './errors.js';
 import { Logger } from './logger.js';

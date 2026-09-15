@@ -1,4 +1,4 @@
-import { BackendSdkConfig } from '@baseel-sdk/types';
+import { BackendSdkConfig } from '@baseel/types';
 import { ApiClient } from './apiClient.js';
 import { Logger } from './logger.js';
 import { validateBackendConfig } from './backendConfigValidator.js';
