@@ -69,6 +69,17 @@ The Baseel SDK is a **TypeScript monorepo** that ships four npm packages impleme
 
 **Important architectural fact, verified directly in source:** `@baseel/loader` and `@baseel/consent-web-component` are **two independent subsystems**. They share only `@baseel/types`. The loader's `BaseelSdk` class has no reference to the web component, and the web component has no reference to the loader. Nothing in the current codebase wires them together. Do not assume that initializing the loader also initializes or configures the consent widget, or vice versa — verified by reading every import statement in both packages' `src/` trees.
 
+> **Publishing & Release Status.** As of this writing, all four packages are **published and publicly installable from the npm registry** under the `@baseel` scope:
+>
+> | Package | Published version |
+> |---|---|
+> | `@baseel/types` | `0.1.0` |
+> | `@baseel/loader` | `0.0.1` |
+> | `@baseel/consent-web-component` | `0.1.0` |
+> | `@baseel/consent-react` | `0.1.0` |
+>
+> GitHub source: [`https://github.com/Baseel-IT-Services/consent-sdk`](https://github.com/Baseel-IT-Services/consent-sdk) (org `Baseel-IT-Services`, default branch `main`). See §6 (Installation) for the current, registry-first install instructions and §36 (Publishing Process) for the verified, repeatable publish procedure.
+
 ### Why it exists / business purpose
 
 Businesses operating in jurisdictions with consent-law requirements (e.g. India's DPDP Act, GDPR-style regimes) must ask website/app visitors for permission to collect and use personal data. The conventional approach — embedding a third-party consent form inside an `<iframe>` — is slow, visually inconsistent with the host page, and hard to theme. The Baseel SDK replaces that iframe with a **native custom element** rendered directly in the host page's DOM (inside an isolated Shadow DOM), fetching its content from a Baseel-hosted backend and submitting the visitor's choices back to that backend.
@@ -174,7 +185,7 @@ baseel-sdk/
 │   │   │   ├── event.ts                  SdkEventMap (loader's typed event bus contract)
 │   │   │   ├── sdk.ts                    BaseelSdkInstance interface
 │   │   │   └── widget.ts                 WidgetTemplate, WidgetPurposeItem, WidgetPiiItem, WidgetTranslation, WidgetPrivacyNotice, ConsentSubmitPayload, etc.
-│   │   ├── package.json                  private:true, files:["dist"], build script: `tsc`
+│   │   ├── package.json                  publishConfig:{"access":"public"}, files:["dist"], build script: `tsc` — published as `@baseel/types` (see §6, §36)
 │   │   └── tsconfig.json                 extends ../../tsconfig.base.json
 │   │
 │   ├── loader/                           @baseel/loader — standalone app-config bootstrapper (NOT wired to the widget)
@@ -190,7 +201,7 @@ baseel-sdk/
 │   │   │   ├── logger.ts                 `Logger` — priority-filtered console wrapper
 │   │   │   ├── errors.ts                 `BaseelError` base + 4 subclasses
 │   │   │   └── index.test.ts             27 Vitest unit tests (the only test file in the entire monorepo)
-│   │   ├── package.json                  private:true, files:["dist"], dependencies: {"@baseel/types":"*"}
+│   │   ├── package.json                  publishConfig:{"access":"public"}, files:["dist"], dependencies: {"@baseel/types":"*"} — published as `@baseel/loader` (see §6, §36)
 │   │   ├── tsconfig.json                 extends ../../tsconfig.base.json
 │   │   └── vite.config.ts                Library build → dist/index.js (ES) + dist/index.cjs, terser-minified
 │   │
@@ -288,66 +299,79 @@ No `.nvmrc`, `engines` field, or CI matrix exists in the repo specifying an exac
 
 ## 6. Installation
 
-The packages are **not published to the public npm registry** (all four `package.json` files that declare a version keep `"private": true` or are otherwise not configured with publish metadata beyond `name`/`version`/`files`). In practice, they are consumed via a locally-built `.tgz` tarball, exactly as this repo's own consuming apps (`testing-app`, and the `compat-tests/*` demos created for QA) do it.
+**All four packages are published and publicly installable from the npm registry**, under the `@baseel` scope (owned by the npm organization `baseel`), each with `"publishConfig": {"access": "public"}` in its `package.json`. This is the current, real state — earlier drafts of this document (and the git history) describe a pre-publish, tarball-only workflow; that workflow still exists for contributors (see §6.5) but is **no longer the primary installation path**.
 
-### 6.1 Building and packing locally
+| Package | Published version | Install command |
+|---|---|---|
+| `@baseel/types` | `0.1.0` | `npm install @baseel/types` (rarely installed directly — it's a transitive dependency of the other three) |
+| `@baseel/loader` | `0.0.1` | `npm install @baseel/loader` |
+| `@baseel/consent-web-component` | `0.1.0` | `npm install @baseel/consent-web-component` |
+| `@baseel/consent-react` | `0.1.0` | `npm install @baseel/consent-react` |
+
+Source: [`https://github.com/Baseel-IT-Services/consent-sdk`](https://github.com/Baseel-IT-Services/consent-sdk).
+
+### 6.1 Installing from the registry (the normal path for consumers)
+
+```bash
+# React or Next.js apps — transitively installs @baseel/consent-web-component and @baseel/types
+npm install @baseel/consent-react
+
+# Any other framework (Vue, Angular, Svelte, SolidJS, Astro, vanilla HTML) — install the web component directly
+npm install @baseel/consent-web-component
+
+# Only if you need the standalone app-config bootstrapper (independent subsystem, not wired to the consent widget — see §1/§2)
+npm install @baseel/loader
+```
+
+No build step, no cloning this repo, and no tarball is required — these behave like any other published npm package.
+
+**pnpm / yarn / bun** work identically, since this is now a standard registry package:
+
+```bash
+pnpm add @baseel/consent-react
+yarn add @baseel/consent-react
+bun add @baseel/consent-react
+```
+
+### 6.2 Verifying the install
+
+```bash
+npm view @baseel/consent-react version         # confirms what's currently published
+npm ls @baseel/consent-react                    # confirms what your project actually resolved/installed
+```
+
+### 6.3 Local development / testing an unpublished change (contributors only)
+
+This subsection is **not** for normal consumers — it only applies if you're actively developing this SDK itself and need to test a not-yet-released change in a separate consuming app before publishing a new version.
 
 ```bash
 # from the monorepo root
 npm install
 npm run build
 
-# then, from the specific package you want to consume
+# then, from the specific package you want to test
 cd packages/consent-web-component
 npm pack
-# → produces baseel-consent-web-component-0.0.1.tgz
+# → produces baseel-consent-web-component-0.1.0.tgz
 ```
 
-### 6.2 Installing the tarball in a consuming project (npm)
+Install that tarball in a scratch consuming project:
 
 ```bash
-npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
-npm install @baseel/consent-react@file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.0.1.tgz
-```
-
-Or reference it directly in `package.json`:
-
-```json
-{
-  "dependencies": {
-    "@baseel/consent-web-component": "file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz",
-    "@baseel/consent-react": "file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.0.1.tgz"
-  }
-}
+npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.1.0.tgz
 ```
 
 > **Important, verified behavior:** re-running `npm install` with the *same* file path does not always pick up a rebuilt tarball, because npm may not detect the file content changed. Re-specify the exact dependency (`npm install @baseel/consent-web-component@file:...`) to force npm to re-read the tarball.
 
-### 6.3 pnpm / yarn
-
-The repo itself uses npm workspaces exclusively (no `pnpm-workspace.yaml` or `.yarnrc` exists). A consuming application using pnpm or yarn can still install the same `.tgz` file:
-
-```bash
-# pnpm
-pnpm add @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
-
-# yarn
-yarn add @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
-```
-
-These are not tested inside this repo's own CI (there is no CI) — they follow standard npm `file:` tarball semantics, which pnpm/yarn also support.
+pnpm/yarn support the same `file:` tarball semantics if needed for local testing.
 
 ### 6.4 Workspace dependency (within this monorepo)
 
-Inside this repo, `@baseel/consent-react`'s `package.json` already declares its dependency as a plain version string (`"@baseel/consent-web-component": "0.0.1"`), resolved via npm workspaces' hoisting/symlinking rather than a tarball — this is how the two packages reference each other during development.
+Inside this repo, `@baseel/consent-react`'s `package.json` declares its dependency on `@baseel/consent-web-component` as a plain version string, resolved via npm workspaces' hoisting/symlinking rather than a tarball or registry fetch — this is how the packages reference each other during development, and is unrelated to how an external consumer installs them (§6.1).
 
-### 6.5 `npm link`
+### 6.5 `npm link` / Git dependency
 
-Not used or documented anywhere in this repo's own workflow. Standard `npm link` semantics would apply if a developer chose to use it, but no `package.json` script or doc references it.
-
-### 6.6 Git dependency
-
-Not used. No package references a git URL as a dependency.
+Neither is used or documented anywhere in this repo's own workflow. Standard `npm link` semantics would apply if a developer chose to use it for local testing, and no package references a git URL as a dependency.
 
 ---
 
@@ -363,7 +387,7 @@ All commands below are the actual root `package.json` scripts, delegated via Tur
 | `npm run test` | `turbo test` — runs `vitest run --passWithNoTests` in each package (`dependsOn: ["^build"]`) | Only `@baseel/loader` has actual tests (27, all passing); the other 3 packages pass trivially with 0 tests |
 | `npm run lint` | `turbo lint` | **A `lint` task is defined in `turbo.json`, but no ESLint/Prettier config exists anywhere in the repo** — this task currently has nothing to actually lint |
 | `npm run typecheck` | `tsc --noEmit` (root-level, not delegated to Turbo) | Type-checks `packages/*/src/**/*` against `tsconfig.base.json` in one pass |
-| `npm publish` | **Not configured.** All packages are `private: true` (or lack publish-relevant registry config) | No `.npmrc`, no `publishConfig`, no CI publish step exists |
+| `npm publish` | Manual, per-package, run from each package's own directory (`npm publish --access public`) — all four packages have `publishConfig.access: "public"` | No CI/CD automation exists yet — every release is published by hand by a maintainer; see §36 for the full verified process |
 
 ### Per-package build tool detail
 
@@ -1132,7 +1156,7 @@ Because `@baseel/consent-web-component` is a native Custom Element, framework su
 | Vanilla JS / Plain HTML | ✅ Full (this is the SDK's native target) | `<script type="module">` import, plain `addEventListener` |
 | TypeScript (standalone, no UI framework) | ✅ Full | Package types resolve cleanly; verified with `tsc --noEmit --strict` |
 
-**Known packaging caveat (verified, not fixed — see §41):** `@baseel/consent-web-component`'s generated `dist/index.d.ts` contains `import { WidgetTemplate } from '@baseel/types';` for the `StateData` type. `@baseel/types` is `private: true` and unpublished. Within this monorepo (or any consumer with workspace/hoisted node_modules access to `@baseel/types`), this resolves fine. A hypothetical fully external consumer who only installs the `consent-web-component` tarball and then runs their own `tsc` against code that imports `StateData` and inspects its `.template` field could see `TS2307: Cannot find module '@baseel/types'`. Two attempted fixes (declaring it as a real dependency; inlining the type via tsup's `dts.resolve`) were both tried and reverted after they caused worse problems (an unpublished-package 404 on install, and an incorrect relative import path, respectively) — there is currently no clean fix without either publishing `@baseel/types` separately or restructuring its barrel exports.
+**Packaging caveat, now resolved by publishing (previously a verified, unfixed gap):** `@baseel/consent-web-component`'s generated `dist/index.d.ts` contains `import { WidgetTemplate } from '@baseel/types';` for the `StateData` type. Previously, `@baseel/types` was `private: true` and unpublished, so a fully external consumer's own `tsc` run could see `TS2307: Cannot find module '@baseel/types'` if it imported `StateData` and inspected its `.template` field (it resolved fine only within this monorepo, or for a consumer with workspace/hoisted node_modules access). Now that `@baseel/types@0.1.0` is published on the public npm registry (§6, §36), this failure mode is resolved for any consumer installing from npm — `@baseel/types` is a real, installable transitive package, not a `private: true` local-only workspace member. Two earlier attempted fixes for the pre-publish situation (declaring it as a real dependency against an unpublished package; inlining the type via tsup's `dts.resolve`) were tried and reverted at the time because they caused worse problems (an unpublished-package 404 on install, and an incorrect relative import path, respectively) — those workarounds are no longer relevant now that the package is genuinely published.
 
 ---
 
@@ -1161,8 +1185,7 @@ These are QA artifacts, not officially maintained example apps — there is no `
 
 ### React (Vite or CRA)
 ```bash
-npm install @baseel/consent-react@file:/path/to/baseel-consent-react-0.0.1.tgz \
-            @baseel/consent-web-component@file:/path/to/baseel-consent-web-component-0.0.1.tgz
+npm install @baseel/consent-react
 ```
 ```tsx
 import { BaseelConsent } from '@baseel/consent-react';
@@ -1183,7 +1206,7 @@ export function ConsentBanner() {
 
 ### Vue 3
 ```bash
-npm install @baseel/consent-web-component@file:/path/to/baseel-consent-web-component-0.0.1.tgz
+npm install @baseel/consent-web-component
 ```
 ```ts
 // vite.config.ts
@@ -1311,13 +1334,85 @@ Turbo caches each package's `dist/**` output keyed by its inputs; an unchanged p
 
 ## 36. Publishing Process
 
-**Not currently implemented.** Verified facts:
+**Implemented — all four packages are published.** This section is the verified, repeatable process that was actually followed, and the process to follow again for any future release. There is no CI/CD automation for this yet (see §41 Limitations) — every step below is run manually by a maintainer.
 
-- Every package's `package.json` either has `"private": true` (`types`, `loader`) or, for `consent-web-component`/`consent-react`, no `private` field but also no `publishConfig`, no registry auth setup, and no CI publish step.
-- No `.npmrc` exists in the repo.
-- The only distribution mechanism actually used is `npm pack` → a local `.tgz` tarball → installed via `file:` reference in a consuming project (see §6 and §30).
+### 36.1 One-time prerequisites
 
-If publishing to a registry becomes a requirement, the missing pieces would be: removing/adjusting `private: true` where a package should genuinely be published, adding `publishConfig` (registry URL, access level), and a CI step running `npm publish` on tagged releases.
+1. **npm organization membership.** The `@baseel` scope is owned by the npm organization `baseel` (not `baseel-sdk` — the packages were originally coded with an `@baseel-sdk` scope, then renamed to `@baseel` specifically to match the org the team actually has access to, since a scoped package can only be published under a scope matching your username or an org you belong to). Publishing requires at least the `developer` role in that org. Verify with:
+   ```bash
+   npm org ls baseel
+   ```
+   Current members: `pareshdeshmukh` (owner), `karanjaiswal0000`, `rani_kumari_baseel`, `vigneshkumar.d` (all `developer`).
+
+2. **npm CLI login.** `npm login` in a real interactive terminal — it opens a browser tab to confirm identity. Being logged into npmjs.com in a browser does **not** authenticate the CLI; they are separate sessions/tokens.
+
+3. **Two-factor authentication.** npm now requires 2FA (or a granular access token with publish permission and 2FA-bypass explicitly granted) before `npm publish` will succeed. Without it, publish fails with:
+   ```
+   npm error code E403
+   npm error 403 403 Forbidden - PUT https://registry.npmjs.org/... - Two-factor authentication or granular access token with bypass 2fa enabled is required to publish packages.
+   ```
+   Enable it at npmjs.com → Account Settings → Configure 2FA → set up an authenticator app (Google Authenticator, Authy, 1Password, etc.) → choose **"Authorization and Publishing"** mode (not "Authorization only", which does not cover `npm publish`).
+
+### 36.2 Per-release steps
+
+4. **Build everything**, from the monorepo root:
+   ```bash
+   npm install
+   npm run build
+   ```
+   Turbo enforces the correct order automatically (`types` → `loader` + `consent-web-component` in parallel → `consent-react` last — see §2's build-order graph).
+
+5. **Optional dry run** per package (no network write, just previews the tarball contents):
+   ```bash
+   cd packages/<name>
+   npm publish --access public --dry-run
+   ```
+
+6. **Real publish, one package at a time, strictly in dependency order.** This order matters: each subsequent package's `package.json` `dependencies` field pins an exact version of the one before it, so publishing out of order would publish a package whose declared dependency doesn't exist on the registry yet.
+   ```bash
+   cd packages/types
+   npm publish --access public
+
+   cd ../loader
+   npm publish --access public
+
+   cd ../consent-web-component
+   npm publish --access public
+
+   cd ../consent-react
+   npm publish --access public
+   ```
+   Each call may prompt for a 2FA one-time code inline, or print a browser URL (`https://www.npmjs.com/auth/cli/...`) and wait for approval. **This step is interactive and must be run by a human in a real terminal** — it cannot be scripted or run non-interactively (e.g. by an AI agent or an unattended CI job) against a personal account's browser-based 2FA.
+
+   For a future automated/CI release pipeline, the documented alternative is an npm **Granular Access Token** scoped to the `@baseel` packages with write permission and 2FA-bypass-for-publish explicitly enabled, stored as a CI secret. This was **not** the method used for the initial publish described here, but is the recommended path if release automation is added later.
+
+7. **Verify the publish landed:**
+   ```bash
+   npm view @baseel/<name> version
+   # or query the registry directly:
+   curl https://registry.npmjs.org/@baseel/<name>/<version>   # 200 = confirmed live
+   ```
+   Note a harmless propagation quirk: immediately after a fresh publish, the *unversioned* packument endpoint (`GET https://registry.npmjs.org/@baseel/<name>`) can return a stale `404` for a few minutes due to npm's Fastly CDN edge-caching a prior negative lookup. The *version-pinned* endpoint and npm's search index (`https://registry.npmjs.org/-/v1/search?text=%40baseel`) reflect the new publish immediately and are the more reliable way to confirm success right after publishing.
+
+### 36.3 Published state (as of this writing)
+
+| Package | Version |
+|---|---|
+| `@baseel/types` | `0.1.0` |
+| `@baseel/loader` | `0.0.1` |
+| `@baseel/consent-web-component` | `0.1.0` |
+| `@baseel/consent-react` | `0.1.0` |
+
+### 36.4 Publishing a future new version
+
+Bump the `version` field in the relevant package's `package.json` (and, if its public API changed in a way that affects a dependent package, bump that dependent's pinned dependency version too), rebuild, then repeat steps 5–7 for just that package.
+
+### 36.5 What was fixed before the first publish
+
+Two verified, now-corrected issues that would otherwise have shipped wrong metadata to the registry permanently (npm package metadata for a given version is effectively immutable once published):
+
+- All four packages' `repository.url` and `homepage` fields pointed at a placeholder URL (`github.com/baseel-sdk/baseel-sdk`) instead of the real GitHub repo. Corrected to `https://github.com/Baseel-IT-Services/consent-sdk` before publishing.
+- The packages were originally coded under the `@baseel-sdk` npm scope, which did not correspond to any npm organization the team had access to (the actual org is `baseel`). All four `package.json` `name` fields (and every internal cross-package `dependencies` reference) were renamed from `@baseel-sdk/*` to `@baseel/*` before publishing.
 
 ---
 
@@ -1369,14 +1464,14 @@ All of the following are **verified, current gaps** in the implementation — no
 2. **No visible Decline/Reject-All control** in the currently rendered widget template, despite the underlying event and handler code existing.
 3. **No retry logic** on any network call (widget's two API calls, or the loader's `ApiClient`) — a single failure goes straight to an error state.
 4. **No request timeout** on the web component's own `fetch()` calls in `api/consent.ts` (unlike the loader's `ApiClient`, which does have a 5000ms default via `AbortController`).
-5. **`@baseel/types` packaging gap** — a fully external (non-monorepo) TypeScript consumer inspecting `StateData.template`'s shape could hit an unresolvable `@baseel/types` import; no clean fix exists without publishing that package separately or restructuring its barrel exports (two different fix attempts were tried and reverted after each caused a worse regression).
+5. ~~`@baseel/types` packaging gap~~ — **resolved.** `@baseel/types` is now published on the npm registry (§6, §36), so an external consumer's `@baseel/types` import (via `consent-web-component`'s generated `.d.ts`) resolves normally as a real transitive dependency; see §29 for the historical detail.
 6. **No accessibility hardening on the Privacy Notice modal** — no `role="dialog"`/`aria-modal`, no focus trap, and no Escape-to-close, despite the Agree button itself being a real, keyboard-operable `<button>`.
 7. **No output sanitization on rendered template text** — backend-provided strings (including `notice.content`, rendered as raw `innerHTML`) are trusted implicitly; a compromised or malicious backend response could inject arbitrary HTML/script into the host page's DOM (albeit scoped to the Shadow DOM subtree).
 8. **`@baseel/loader` and the consent widget are architecturally disconnected** — there is no shared session/config/consent-state between them in current code, despite both being part of the same monorepo and product family.
 9. **No linter or formatter configured** (`turbo.json` declares a `lint` task with nothing to run), despite it being listed as an available script.
 10. **No CI/CD pipeline** — no `.github/workflows/`, no other CI config found anywhere.
-11. **No published npm registry presence** — all distribution is via locally-built `.tgz` tarballs.
-12. **No `CHANGELOG.md` and no automated versioning tool** — all four packages remain pinned at `0.0.1`.
+11. ~~No published npm registry presence~~ — **resolved.** All four packages are published under the `@baseel` scope (§6, §36). The remaining genuine gap is automation: publishing is still a manual, per-package process with no CI/CD pipeline behind it.
+12. **No `CHANGELOG.md` and no automated versioning tool** — packages are versioned individually (`@baseel/types`/`consent-web-component`/`consent-react` at `0.1.0`, `@baseel/loader` at `0.0.1`), but there is no changelog file and no tool (e.g. Changesets) automating version bumps across the workspace.
 13. **Only `@baseel/loader` has real unit tests** — the other three packages declare `vitest` but have zero test files.
 14. **Only Chromium has been live-browser-tested** during this SDK's own QA process — Firefox, Safari (desktop and mobile), and mobile Chrome have not been verified in this environment.
 

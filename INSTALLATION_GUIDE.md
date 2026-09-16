@@ -1,10 +1,17 @@
 # SDK Installation Guide
 
-> **Document scope:** This guide is generated strictly from the current state of the `baseel-sdk` repository (source code, `package.json` files, build configs, and the existing `DOCUMENTATION.md` / `IMPLEMENTATION_DETAILS.md`, which were read in full to produce it). It documents only installation methods, frameworks, and configuration options that actually exist in this codebase. Where a commonly-expected installation feature (a public registry, an `.env` file, a CLI installer, etc.) is **not present**, this guide says so explicitly instead of omitting or inventing it.
+> **Document scope:** This guide is generated strictly from the current state of the `baseel-sdk` repository (source code, `package.json` files, build configs, and the existing `DOCUMENTATION.md` / `IMPLEMENTATION_DETAILS.md`, which were read in full to produce it). It documents only installation methods, frameworks, and configuration options that actually exist in this codebase. Where a commonly-expected installation feature (an `.env` file, a CLI installer, etc.) is **not present**, this guide says so explicitly instead of omitting or inventing it.
+
+> **📦 This SDK is published on the public npm registry** under the `@baseel` scope. Install it directly — no build step, no cloning the repo, no tarball required:
+> ```bash
+> npm install @baseel/consent-react            # React / Next.js apps
+> npm install @baseel/consent-web-component     # Vue, Angular, Svelte, vanilla HTML, or any other framework
+> ```
+> See [§5](#5-installation) for the full installation guide, and [§11](#11-framework-specific-installation) for per-framework instructions.
 
 | | |
 |---|---|
-| **Version** | All four packages are pinned at `0.0.1` (no other released version exists) |
+| **Version** | `@baseel/types` 0.1.0 · `@baseel/loader` 0.0.1 · `@baseel/consent-web-component` 0.1.0 · `@baseel/consent-react` 0.1.0 — all published live on the public npm registry under the `@baseel` scope |
 | **Supported SDK Packages** | `@baseel/types`, `@baseel/loader`, `@baseel/consent-web-component`, `@baseel/consent-react` |
 | **Supported Frameworks** | React, Next.js, Vue 3, Nuxt 3/4, Angular, Svelte, SvelteKit, SolidJS, Astro, Vanilla JavaScript/HTML, standalone TypeScript |
 | **Supported Runtimes** | Any evergreen browser with native Custom Elements v1 + Shadow DOM v1 (Chrome/Edge, Firefox, Safari); Node.js (for `@baseel/loader` and for building/type-checking only — the widget itself is browser-only) |
@@ -27,6 +34,7 @@
 12. [Initialization Flow](#12-initialization-flow)
 13. [Dependency Graph](#13-dependency-graph)
 14. [Build Process](#14-build-process)
+    - [14.1 Publishing a New Version (Maintainers Only)](#141-publishing-a-new-version-maintainers-only)
 15. [Verification](#15-verification)
 16. [Troubleshooting](#16-troubleshooting)
 17. [Frequently Asked Questions](#17-frequently-asked-questions)
@@ -134,7 +142,7 @@ The table below reflects **actual verification performed** in this repository's 
 | Aspect | Detail |
 |---|---|
 | Purpose | A standalone, headless application-config bootstrapper: `loadSdk()` singleton init, config validation, backend config fetch (`GET /v1/configs/{appId}`), a typed event bus, a logger, and an error hierarchy. **Not wired to the consent widget** — see [§1](#1-introduction). |
-| Installation command | `npm install @baseel/loader@file:../baseel-sdk/packages/loader/<tarball>.tgz` (built locally — see [§5](#5-installation); the package has no published tarball workflow documented, `npm pack` must be run manually) |
+| Installation command | `npm install @baseel/loader` (published on the public npm registry, current version `0.0.1` — see [§5](#5-installation)) |
 | Import syntax | `import { loadSdk, ConfigurationError, InitializationError, ConsentError, ApiError } from '@baseel/loader';` |
 | When to use it | Use only if your application needs a generic app-config bootstrap/event-bus layer with its own backend contract (`/v1/configs/{appId}`) — **not** required to render the consent widget. |
 | Dependencies | `@baseel/types: "*"` |
@@ -146,7 +154,7 @@ The table below reflects **actual verification performed** in this repository's 
 | Aspect | Detail |
 |---|---|
 | Purpose | The actual consent banner/UI product — a native `<baseel-consent>` Custom Element rendered in Shadow DOM. Framework-agnostic. |
-| Installation command | `npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz` |
+| Installation command | `npm install @baseel/consent-web-component` (published on the public npm registry, current version `0.1.0` — see [§5](#5-installation)) |
 | Import syntax | `import '@baseel/consent-web-component';` (side-effect import registers the custom element) |
 | When to use it | Use this directly in any non-React framework (Vue, Angular, Svelte, Astro, vanilla HTML) or when you want to avoid the React wrapper. |
 | Dependencies | None declared in `package.json` (only a type-only import of `@baseel/types`, erased at build — see the packaging caveat in [§16](#16-troubleshooting)) |
@@ -158,7 +166,7 @@ The table below reflects **actual verification performed** in this repository's 
 | Aspect | Detail |
 |---|---|
 | Purpose | A thin React wrapper (`<BaseelConsent>`) around `@baseel/consent-web-component`, for JSX-based consumption in React/Next.js apps. |
-| Installation command | `npm install @baseel/consent-react@file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.0.1.tgz` (also requires installing `@baseel/consent-web-component` — see [§5.2](#52-installing-the-tarball-in-a-consuming-project-npm)) |
+| Installation command | `npm install @baseel/consent-react` (published on the public npm registry, current version `0.1.0`; transitively installs `@baseel/consent-web-component` as a dependency — see [§5](#5-installation)) |
 | Import syntax | `import { BaseelConsent } from '@baseel/consent-react';` |
 | When to use it | Use in React or Next.js applications for idiomatic JSX usage instead of manually managing a raw custom element. |
 | Dependencies | `@baseel/consent-web-component: "0.0.1"` |
@@ -169,30 +177,74 @@ The table below reflects **actual verification performed** in this repository's 
 
 ## 5. Installation
 
-> **Critical, verified fact:** These packages are **not published to the public npm registry**. All four `package.json` files either declare `"private": true` (`@baseel/types`, `@baseel/loader`) or simply have no publish-relevant registry configuration (`@baseel/consent-web-component`, `@baseel/consent-react`). The only distribution mechanism that actually exists in this repository is a **locally-built `.tgz` tarball**, installed via npm's `file:` protocol. `npm install @baseel/consent-react` (bare, against the public registry) will **not** work.
+> **Published, verified fact:** All four packages are **live on the public npm registry** under the `@baseel` scope (owned by the npm organization `baseel`), each with `publishConfig.access: "public"`:
+>
+> | Package | Version |
+> |---|---|
+> | `@baseel/types` | `0.1.0` |
+> | `@baseel/loader` | `0.0.1` |
+> | `@baseel/consent-web-component` | `0.1.0` |
+> | `@baseel/consent-react` | `0.1.0` |
+>
+> `npm install @baseel/consent-react` (bare, against the public registry) **works** — no build step, no cloning this repo, and no tarball is required for a normal consumer. Source: [`https://github.com/Baseel-IT-Services/consent-sdk`](https://github.com/Baseel-IT-Services/consent-sdk).
 
-### 5.1 Building and packing locally
+### 5.1 Installing from the registry (npm / pnpm / yarn / bun)
+
+```bash
+# npm — React or Next.js apps (transitively installs @baseel/consent-web-component and @baseel/types)
+npm install @baseel/consent-react
+
+# npm — any other framework (Vue, Angular, Svelte, SolidJS, Astro, vanilla HTML)
+npm install @baseel/consent-web-component
+
+# npm — only if you need the standalone app-config bootstrapper (independent of the widget — see §1/§2)
+npm install @baseel/loader
+```
+
+```bash
+# pnpm
+pnpm add @baseel/consent-react
+
+# yarn
+yarn add @baseel/consent-react
+
+# bun
+bun add @baseel/consent-react
+```
+
+These are now standard registry installs — pnpm/yarn/bun all resolve `@baseel/*` the same way they would resolve any other published scoped package. (The repo itself still uses npm workspaces exclusively for its own internal development — no `pnpm-workspace.yaml`, `.yarnrc`, or `bun.lockb` exists in this repository — but that has no bearing on how an external consumer installs the published packages.)
+
+### 5.2 Verifying the install
+
+```bash
+npm view @baseel/consent-react version   # confirms what's currently published on the registry
+npm ls @baseel/consent-react              # confirms what your project actually resolved/installed
+```
+
+### 5.3 Local development / testing an unpublished change (contributors only)
+
+This subsection is **not** for normal consumers — it's only relevant if you're developing this SDK itself and need to test a not-yet-released change in a separate app before publishing a new version.
 
 ```bash
 # from the monorepo root
 npm install
 npm run build
 
-# then, from the specific package you want to consume
+# then, from the specific package you want to test
 cd packages/consent-web-component
 npm pack
-# → produces baseel-consent-web-component-0.0.1.tgz
+# → produces baseel-consent-web-component-0.1.0.tgz
 
 cd ../consent-react
 npm pack
-# → produces baseel-consent-react-0.0.1.tgz
+# → produces baseel-consent-react-0.1.0.tgz
 ```
 
-### 5.2 Installing the tarball in a consuming project (npm)
+Install that tarball in a scratch consuming project:
 
 ```bash
-npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
-npm install @baseel/consent-react@file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.0.1.tgz
+npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.1.0.tgz
+npm install @baseel/consent-react@file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.1.0.tgz
 ```
 
 Or reference it directly in `package.json`:
@@ -200,31 +252,26 @@ Or reference it directly in `package.json`:
 ```json
 {
   "dependencies": {
-    "@baseel/consent-web-component": "file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz",
-    "@baseel/consent-react": "file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.0.1.tgz"
+    "@baseel/consent-web-component": "file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.1.0.tgz",
+    "@baseel/consent-react": "file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.1.0.tgz"
   }
 }
 ```
 
 > ⚠️ **Warning — verified behavior:** Re-running `npm install` with the *same* file path does not always pick up a rebuilt tarball, because npm may not detect that the file content changed. Re-specify the exact dependency (`npm install @baseel/consent-web-component@file:...`) to force npm to re-read the tarball.
 
-### 5.3 pnpm / yarn / bun
-
-The repo itself uses **npm workspaces exclusively** — no `pnpm-workspace.yaml`, no `.yarnrc`, and no `bun.lockb` exists anywhere in the repository. A consuming application using pnpm or yarn can still install the same `.tgz` file using standard `file:` tarball semantics (these are not tested inside this repo's own QA process, since there is no CI):
+pnpm/yarn support the same `file:` tarball semantics for local testing:
 
 ```bash
-# pnpm
-pnpm add @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
-
-# yarn
-yarn add @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
+pnpm add @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.1.0.tgz
+yarn add @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.1.0.tgz
 ```
 
-> **bun is not documented or tested anywhere in this repository.** Do not assume it is supported — no verification exists either way.
+> **bun is not documented or tested anywhere in this repository.** Do not assume its `file:` tarball behavior is verified — no local-tarball verification exists for bun either way; its normal registry install (§5.1) is unaffected.
 
 ### 5.4 Workspace dependency (within this monorepo)
 
-Inside this repo, `@baseel/consent-react`'s `package.json` already declares its dependency on `@baseel/consent-web-component` as a plain version string (`"0.0.1"`), resolved via npm workspaces' hoisting/symlinking — this is how the packages reference each other during development, without a tarball.
+Inside this repo, `@baseel/consent-react`'s `package.json` declares its dependency on `@baseel/consent-web-component` as a plain version string, resolved via npm workspaces' hoisting/symlinking — this is how the packages reference each other during development, and is unrelated to how an external consumer installs them (§5.1).
 
 ### 5.5 `npm link` / Git dependency
 
@@ -383,8 +430,7 @@ Invalid `environment` or `logLevel` values throw `ConfigurationError` with `CONF
 
 **Installation:**
 ```bash
-npm install @baseel/consent-react@file:../baseel-sdk/packages/consent-react/baseel-consent-react-0.0.1.tgz \
-            @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
+npm install @baseel/consent-react
 ```
 
 **Imports & usage:**
@@ -442,7 +488,7 @@ There is **no dedicated `@baseel/consent-vue` wrapper package** — Vue 3 consum
 
 **Installation:**
 ```bash
-npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
+npm install @baseel/consent-web-component
 ```
 
 **Configuration (`vite.config.ts`):**
@@ -475,7 +521,7 @@ There is **no dedicated `@baseel/consent-angular` wrapper package** — Angular 
 
 **Installation:**
 ```bash
-npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
+npm install @baseel/consent-web-component
 ```
 
 **Module setup:**
@@ -512,7 +558,7 @@ export class AppComponent implements AfterViewInit {
 
 **Installation:**
 ```bash
-npm install @baseel/consent-web-component@file:../baseel-sdk/packages/consent-web-component/baseel-consent-web-component-0.0.1.tgz
+npm install @baseel/consent-web-component
 ```
 (or reference the built `dist/index.js` file directly via a `<script type="module">` tag without any package manager, since the bundle is self-contained with `external: []`)
 
@@ -657,10 +703,35 @@ flowchart TD
 | `npm run test` | `turbo test` — runs `vitest run --passWithNoTests` in each package. Only `@baseel/loader` has actual tests (27, all passing). |
 | `npm run lint` | `turbo lint` — **a `lint` task is defined in `turbo.json`, but no ESLint/Prettier config exists anywhere in the repo.** |
 | `npm run typecheck` | `tsc --noEmit` (root-level) — type-checks `packages/*/src/**/*` against `tsconfig.base.json`. |
-| `npm publish` | **Not configured.** All packages are `private: true` or lack publish-relevant registry config; no `.npmrc`, no `publishConfig`, no CI publish step exists. |
-| Packaging | `npm pack` (run manually inside a package directory) → `<package-name>-0.0.1.tgz`, used for local installation in consuming apps. |
+| `npm publish` | Manual, per-package (`npm publish --access public` run from each package's own directory, in dependency order). All four packages are already published — see §14.1. No CI/CD automation exists yet. |
+| Packaging | `npm pack` (run manually inside a package directory) → `<package-name>-<version>.tgz` — now only needed for contributor/local-dev testing of an unpublished change (§5.3); normal consumers install straight from the registry (§5.1). |
 
 Turbo caches each package's `dist/**` output keyed by its inputs — an unchanged package is skipped on subsequent builds (cache hit).
+
+### 14.1 Publishing a New Version (Maintainers Only)
+
+This is a maintainer-only runbook — normal SDK consumers never need any of this. It's the verified, repeatable process behind the current published state (`@baseel/types@0.1.0`, `@baseel/loader@0.0.1`, `@baseel/consent-web-component@0.1.0`, `@baseel/consent-react@0.1.0`), and the process to follow for any future release. There is no CI/CD automation for this yet — every step is run by hand.
+
+**One-time prerequisites:**
+
+1. **npm org membership.** The `@baseel` scope is owned by the npm organization `baseel`. Publishing requires at least the `developer` role. Verify with `npm org ls baseel`.
+2. **npm CLI login.** `npm login` in a real interactive terminal (opens a browser tab). Being logged into npmjs.com in a browser does **not** authenticate the CLI — they're separate sessions.
+3. **Two-factor authentication.** npm requires 2FA (or a granular access token with publish + 2FA-bypass permission) before `npm publish` succeeds; otherwise: `403 E403: Two-factor authentication or granular access token with bypass 2fa enabled is required to publish packages.` Enable it at npmjs.com → Account Settings → Configure 2FA → an authenticator app → **"Authorization and Publishing"** mode (not "Authorization only").
+
+**Per-release steps:**
+
+4. Build everything: `npm install && npm run build` from the monorepo root (Turbo enforces the correct order — see the diagram above).
+5. Optional dry run per package: `cd packages/<name> && npm publish --access public --dry-run`.
+6. Real publish, one package at a time, strictly in dependency order (breaking this order publishes a package whose pinned dependency doesn't exist on the registry yet):
+   ```bash
+   cd packages/types              && npm publish --access public
+   cd ../loader                   && npm publish --access public
+   cd ../consent-web-component    && npm publish --access public
+   cd ../consent-react            && npm publish --access public
+   ```
+   Each call may prompt for a 2FA OTP or a browser approval URL — **interactive, must be run by a human**, not scriptable against a personal account's browser-based 2FA. (For future CI automation, use an npm Granular Access Token scoped to `@baseel` with write + 2FA-bypass-for-publish, stored as a CI secret — not what was used for the initial publish.)
+7. Verify: `npm view @baseel/<name> version`, or `GET https://registry.npmjs.org/@baseel/<name>/<version>` (200 = live). Note: the *unversioned* packument endpoint can show a stale 404 for a few minutes post-publish (CDN edge-caching) — harmless and self-resolving; the version-pinned endpoint and npm's search index reflect the publish immediately.
+8. **For a future version bump:** bump `version` in the package's `package.json` (and any dependent package's pinned reference to it), rebuild, repeat steps 5–7.
 
 ---
 
@@ -719,9 +790,9 @@ npm run test         # 27 passing tests in @baseel/loader; 0 tests (pass trivial
 | Angular build fails with `NG8001: 'baseel-consent' is not a known element` | Missing `CUSTOM_ELEMENTS_SCHEMA` | Add `schemas: [CUSTOM_ELEMENTS_SCHEMA]` to the component decorator |
 | Angular throws `Unexpected global target 'baseel'...` at compile time | Attempted `(baseel:consent-granted)="..."` template binding | Angular can't parse a colon-containing custom event name this way — use `ViewChild` + `addEventListener` |
 | Submit request blocked by the browser (CORS error in console) | Backend's `Access-Control-Allow-Headers` doesn't include `x-publishable-key` | Update backend CORS config to include `authorization, content-type, x-publishable-key` |
-| `npm install @baseel/consent-react` fails / package not found | Attempting to install from the public npm registry | These packages are not published; install from a locally-built `.tgz` (see [§5](#5-installation)) |
-| Rebuilt package changes don't show up in a consuming app | `npm install` with an unchanged file path doesn't always detect a rebuilt tarball | Re-specify the exact dependency (`npm install <pkg>@file:...`) to force re-read |
-| `TS2307: Cannot find module '@baseel/types'` when a consumer's own `tsc` inspects `StateData.template` | Known packaging gap: `@baseel/consent-web-component` has no runtime dependency on `@baseel/types` in its `package.json`, and `@baseel/types` itself is `private: true` (unpublished) | No clean fix currently exists; avoid deep-inspecting `.template`'s type outside the monorepo, or vendor/duplicate the relevant type locally |
+| `npm install @baseel/consent-react` fails / package not found | Usually a stale local npm cache/registry mirror, a typo in the package name, or a private/scoped-registry `.npmrc` override redirecting the `@baseel` scope elsewhere | The package is published and public — confirm with `npm view @baseel/consent-react version`; check for a `.npmrc` line like `@baseel:registry=...` pointing away from `https://registry.npmjs.org/` |
+| Rebuilt package changes don't show up in a consuming app (contributor/local-dev workflow only, §5.3) | `npm install` with an unchanged `file:` tarball path doesn't always detect a rebuilt tarball | Re-specify the exact dependency (`npm install <pkg>@file:...`) to force re-read |
+| `TS2307: Cannot find module '@baseel/types'` when a consumer's own `tsc` inspects `StateData.template` | Historical packaging gap from before `@baseel/types` was published — now resolved | Update to the current published versions; `@baseel/types@0.1.0` is a real, installable transitive dependency, not `private: true` |
 | SDK re-initializes and shows a `console.warn` "Already initialized" (loader only) | `loadSdk()` called twice with the same `appId` in the same browser session | Expected, idempotent behavior — the existing instance is returned |
 | `InitializationError` thrown (loader only) | `loadSdk()` called twice with a **different** `appId` in the same browser session | By design — one `appId` per page load; reload the page to re-initialize with a new `appId` |
 | Build fails / dependency conflicts | Node version incompatible with the toolchain (Vite 5, tsup 8, TypeScript 5.4+) | No `engines` field is enforced — ensure Node 18+ is used, since this is not automatically validated |
@@ -732,7 +803,7 @@ npm run test         # 27 passing tests in @baseel/loader; 0 tests (pass trivial
 ## 17. Frequently Asked Questions
 
 **Q: Can I install this SDK from the public npm registry?**
-A: No. All four packages are unpublished. You must build and `npm pack` them locally, then install the resulting `.tgz` via `file:` (see [§5](#5-installation)).
+A: Yes. All four packages are published under the `@baseel` scope — `npm install @baseel/consent-react` (or `@baseel/consent-web-component` for non-React apps) works directly against the public registry, no build step required (see [§5](#5-installation)). Building from source and installing a local `.tgz` via `file:` is now only needed if you're contributing to the SDK itself and testing an unreleased change (§5.3).
 
 **Q: Do I need `@baseel/loader` to use the consent widget?**
 A: No. They are two independent packages sharing only `@baseel/types`. The widget (`consent-web-component`/`consent-react`) works with zero involvement from `@baseel/loader`.
@@ -741,7 +812,7 @@ A: No. They are two independent packages sharing only `@baseel/types`. The widge
 A: No. There is no client-side storage of any kind (verified: zero references to `localStorage`, `sessionStorage`, or `document.cookie`). Every page load re-fetches the template and shows the form again; persistence must be handled entirely by your backend.
 
 **Q: Which package manager should I use to install it?**
-A: The monorepo itself uses npm exclusively. Consuming applications can use npm, pnpm, or yarn with the same `.tgz` tarball via `file:` references (see [§5.3](#53-pnpm--yarn--bun)) — bun is untested.
+A: Any of them — npm, pnpm, yarn, or bun all install `@baseel/consent-react`/`@baseel/consent-web-component` directly from the public registry the same way they'd install any other published scoped package (see [§5.1](#51-installing-from-the-registry-npm--pnpm--yarn--bun)). The monorepo itself uses npm workspaces exclusively for its own internal development, which has no bearing on how you install the published packages.
 
 **Q: Is there a `.env` file or environment variable I need to set?**
 A: No. The SDK reads zero environment variables. All configuration is passed explicitly via HTML attributes/React props or the `SdkConfig` object (see [§9](#9-environment-variables) and [§10](#10-configuration)).
@@ -759,14 +830,14 @@ A: The widget shows its `error` state with a user-facing message and dispatches 
 
 ## 18. Best Practices
 
-- **Build and tarball before installing** — there is no registry shortcut; run `npm install && npm run build` at the monorepo root, then `npm pack` inside each package you need.
+- **Just install from the registry** — `npm install @baseel/consent-react` (or `@baseel/consent-web-component`) is all a normal consumer needs; the build-and-tarball workflow (§5.3) is only for contributors testing an unreleased SDK change.
 - **Always supply the three required attributes/props first.** `public-key`, `session-token`, and `screen-id` are mandatory — the component fails predictably (error state, no network call) rather than silently if any is missing.
 - **Wrap in a client-only boundary in SSR frameworks.** Even though the package no longer *crashes* on import under SSR, the widget only does anything meaningful in a real browser — use `"use client"` / `onMount` / a client-only plugin per your framework's convention.
 - **Don't rely on client-side persistence.** Since none exists, any "don't show the form again" requirement must be implemented in your own application logic (e.g. by checking your own backend's consent record before mounting the widget at all).
 - **Listen for `baseel:consent-error`, not just `-granted`/`-denied`.** It is the only signal the widget gives you when something goes wrong (missing config, network failure, bad response).
-- **Re-specify the exact tarball dependency after rebuilding**, rather than a bare `npm install`, to guarantee a consuming project picks up a locally rebuilt package.
+- **(Contributors only) re-specify the exact tarball dependency after rebuilding**, rather than a bare `npm install`, to guarantee a consuming project picks up a locally rebuilt package — not relevant when installing the published registry version.
 - **Match the framework-specific integration requirement** — Vue's `isCustomElement`, Angular's `CUSTOM_ELEMENTS_SCHEMA`, Solid's JSX augmentation. Omitting it produces either a hard build error (Angular) or a silent dev-only warning (Vue).
-- **Pin exact versions where it matters.** Internal cross-package references are inconsistent in the current codebase (`consent-react` pins `consent-web-component` at exact `0.0.1`, while `loader` uses a wildcard `"*"` for `@baseel/types`) — do not assume semantic-versioning ranges are safe until this is resolved upstream.
+- **Pin exact versions where it matters.** Internal cross-package references are inconsistent in the current codebase (`consent-react` pins `consent-web-component` at exact `0.1.0`, while `loader` uses a wildcard `"*"` for `@baseel/types`) — do not assume semantic-versioning ranges are safe until this is resolved upstream.
 
 ---
 
@@ -788,9 +859,8 @@ yarn remove @baseel/consent-react @baseel/consent-web-component
 Additional manual cleanup steps (since there is no automated uninstall hook):
 
 1. Remove the `<baseel-consent>` element (or `<BaseelConsent>` React component) and any associated event listeners from your application code.
-2. Remove the `file:` dependency entries from your `package.json` if you referenced the tarball directly.
-3. Delete the `.tgz` tarball file(s) if you copied them into your own project's directory tree.
-4. If you used `@baseel/loader`, remove the `loadSdk()` call; note that it sets `window.__BASEEL_SDK__` / `window.BaseelSdk` globals in the browser — these are cleared automatically on a full page reload since nothing persists them across reloads (see [§17](#17-frequently-asked-questions)).
+2. If you're a contributor who was testing an unreleased change via a local tarball (§5.3), also remove any leftover `file:` dependency entries from your `package.json` and delete the `.tgz` tarball file(s) — not applicable if you installed normally from the registry.
+3. If you used `@baseel/loader`, remove the `loadSdk()` call; note that it sets `window.__BASEEL_SDK__` / `window.BaseelSdk` globals in the browser — these are cleared automatically on a full page reload since nothing persists them across reloads (see [§17](#17-frequently-asked-questions)).
 
 No consent data, cookies, or storage is written by the SDK itself, so there is nothing client-side to purge beyond the package and its usage in your code.
 
@@ -801,13 +871,19 @@ No consent data, cookies, or storage is written by the SDK itself, so there is n
 ### Useful commands
 
 ```bash
+# For consumers — install directly from the registry, no build needed:
+npm install @baseel/consent-react           # or @baseel/consent-web-component for non-React apps
+npm view @baseel/consent-react version      # confirm the currently published version
+
+# For contributors working inside this monorepo:
 npm install                 # install all workspace dependencies (monorepo root)
 npm run build                # build all 4 packages in dependency order (turbo build)
 npm run dev                  # watch-mode build for consent-web-component / consent-react
 npm run test                 # run vitest across all packages
 npm run typecheck            # tsc --noEmit across all packages
 npm run lint                 # declared, but no linter is configured (no-op)
-npm pack                     # (run inside a package dir) produce a local .tgz tarball
+npm publish --access public  # (run inside a package dir, in dependency order — see §14.1) publish a new version
+npm pack                     # (run inside a package dir) produce a local .tgz tarball for local-dev testing (§5.3)
 npm install <pkg>@file:<tgz> # (re-)install a locally built tarball, forcing a re-read
 ```
 
