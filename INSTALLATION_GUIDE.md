@@ -711,7 +711,7 @@ Turbo caches each package's `dist/**` output keyed by its inputs — an unchange
 
 ### 14.1 Publishing a New Version (Maintainers Only)
 
-This is a maintainer-only runbook — normal SDK consumers never need any of this. It's the verified, repeatable process behind the current published state (`@baseel/types@0.1.0`, `@baseel/loader@0.0.1`, `@baseel/consent-web-component@0.1.0`, `@baseel/consent-react@0.1.0`), and the process to follow for any future release. There is no CI/CD automation for this yet — every step is run by hand.
+This is a maintainer-only runbook — normal SDK consumers never need any of this. It's the verified, repeatable process behind the current published state (`@baseel/types@0.1.0`, `@baseel/loader@0.0.1`, `@baseel/consent-web-component@0.2.0`, `@baseel/consent-react@0.2.0`), and the process to follow for any future release. There is no CI/CD automation for this yet — every step is run by hand.
 
 **One-time prerequisites:**
 
