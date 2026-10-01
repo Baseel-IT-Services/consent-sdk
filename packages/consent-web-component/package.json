@@ -1,6 +1,6 @@
 {
   "name": "@baseel/consent-web-component",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Framework-agnostic web component core for the Baseel Consent SDK",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "web-component", "custom-element"],
   "author": "Baseel",

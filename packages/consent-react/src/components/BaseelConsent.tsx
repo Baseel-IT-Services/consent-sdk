@@ -13,6 +13,7 @@ declare global {
         'session-token'?: string;
         'screen-id'?: string;
         'api-base-url'?: string;
+        email?: string;
         class?: string;
         style?: CSSProperties;
       };
@@ -25,6 +26,8 @@ export interface BaseelConsentProps {
   screenId: string;
   sessionToken: string;
   apiBaseUrl?: string;
+  /** When provided, the user must verify this email by OTP before consent is submitted. */
+  email?: string;
   onConsentGranted?: (detail: ConsentGrantedDetail) => void;
   onConsentDenied?: (detail: ConsentDeniedDetail) => void;
   onConsentError?: (message: string) => void;
@@ -37,6 +40,7 @@ export function BaseelConsent({
   screenId,
   sessionToken,
   apiBaseUrl,
+  email,
   onConsentGranted,
   onConsentDenied,
   onConsentError,
@@ -72,6 +76,7 @@ export function BaseelConsent({
       screen-id={screenId}
       session-token={sessionToken}
       {...(apiBaseUrl ? { 'api-base-url': apiBaseUrl } : {})}
+      {...(email ? { email } : {})}
       {...(className ? { class: className } : {})}
       style={style}
     />

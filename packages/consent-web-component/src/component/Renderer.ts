@@ -1,6 +1,8 @@
 import type { StateData } from './StateManager.js';
 import type { WidgetTemplate, WidgetPurposeItem, WidgetPrivacyNotice } from '@baseel/types';
 import { translateText, stripHtml } from '../utils/translate.js';
+import { sanitizeOtp } from './EmailVerification.js';
+import type { EmailVerificationState } from './EmailVerification.js';
 
 const LANG_NAMES: Record<string, string> = {
   en: 'English',
@@ -231,13 +233,68 @@ const STYLES = `
   .footer-agree label { font-size: 12px; color: var(--baseel-muted); line-height: 1.5; cursor: pointer; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .btn:disabled:hover { opacity: 0.45; }
+  .btn:focus-visible, .privacy-link:focus-visible, .link-btn:focus-visible {
+    outline: 2px solid var(--baseel-primary); outline-offset: 2px;
+  }
+
+  /* ── Email verification ── */
+  .verify-section { padding: 20px 24px; border-bottom: 1px solid var(--baseel-border); }
+  .verify-text { font-size: 13px; color: var(--baseel-muted); line-height: 1.5; }
+  .verify-email {
+    font-size: 14px; font-weight: 600; color: var(--baseel-text);
+    margin: 4px 0 14px; overflow-wrap: anywhere;
+  }
+  .verify-hint { font-size: 12px; color: var(--baseel-muted); margin-top: 10px; line-height: 1.5; }
+  .otp-label { display: block; font-size: 13px; font-weight: 500; color: var(--baseel-text); margin-bottom: 8px; }
+  .otp-inputs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .otp-input {
+    flex: 1 1 0; min-width: 0; max-width: 44px; height: 46px;
+    border: 1px solid var(--baseel-border); border-radius: 8px;
+    font-size: 18px; font-weight: 600; text-align: center; color: var(--baseel-text);
+    background: #fff; outline: none; font-family: inherit;
+  }
+  .otp-input:focus { border-color: var(--baseel-primary); box-shadow: 0 0 0 3px rgba(0,102,255,0.15); }
+  .otp-input:disabled { background: #f9fafb; cursor: not-allowed; }
+  .otp-input[aria-invalid="true"] { border-color: var(--baseel-danger); }
+  .verify-resend { font-size: 12px; color: var(--baseel-muted); margin-top: 12px; line-height: 1.5; }
+  .link-btn {
+    color: var(--baseel-primary); text-decoration: underline; cursor: pointer; font-weight: 500;
+    background: none; border: none; font-size: inherit; font-family: inherit; padding: 0;
+  }
+  .link-btn:disabled { color: var(--baseel-muted); cursor: not-allowed; text-decoration: none; }
+  .link-btn[hidden], [data-resend-countdown][hidden] { display: none; }
+  .verify-error {
+    font-size: 12px; color: var(--baseel-danger); background: #fef2f2;
+    border-radius: 8px; padding: 8px 10px; margin-top: 12px; line-height: 1.5;
+  }
+  .verify-success { font-size: 14px; font-weight: 600; color: var(--baseel-success); }
+  @media (max-width: 420px) {
+    .verify-section { padding: 16px; }
+    .verify-btn { width: 100%; }
+    .otp-inputs { gap: 6px; }
+  }
 `;
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Consent inputs that are frozen while email verification is shown, so the choices
+// captured at "Agree & Save" are exactly what gets submitted.
+const CONSENT_INPUT_SELECTOR =
+  'input[name="purpose"], input[name="pii"], [data-agree-check], [data-action="accept"]';
 
 const AUTO_CLOSE_DELAY_MS = 1200;
 
 export class Renderer {
   private root: ShadowRoot;
   private closeTimer: ReturnType<typeof setTimeout> | null = null;
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(shadowRoot: ShadowRoot) {
     this.root = shadowRoot;
@@ -246,11 +303,20 @@ export class Renderer {
     this.root.appendChild(style);
   }
 
+  destroy(): void {
+    if (this.closeTimer) {
+      clearTimeout(this.closeTimer);
+      this.closeTimer = null;
+    }
+    this.stopCountdown();
+  }
+
   render(data: StateData): void {
     if (this.closeTimer) {
       clearTimeout(this.closeTimer);
       this.closeTimer = null;
     }
+    this.stopCountdown();
 
     const existing = this.root.querySelector('.baseel-overlay');
     if (existing) existing.remove();
@@ -297,6 +363,261 @@ export class Renderer {
         overlay.remove();
         this.closeTimer = null;
       }, AUTO_CLOSE_DELAY_MS);
+    }
+  }
+
+  /**
+   * Shows, updates or removes the email verification section of the ready dialog.
+   * Only the section's slot is re-rendered, so the consent form (and the user's
+   * selections) is left untouched.
+   */
+  renderVerification(v: EmailVerificationState | null): void {
+    const widget = this.root.querySelector<HTMLElement>('.baseel-overlay .widget');
+    const slot = widget?.querySelector<HTMLElement>('[data-verify-slot]');
+    if (!widget || !slot) return;
+
+    this.stopCountdown();
+
+    if (!v) {
+      slot.innerHTML = '';
+      delete slot.dataset.otpGeneration;
+      delete slot.dataset.status;
+      this.setConsentLocked(widget, false);
+      return;
+    }
+
+    const prevStatus = slot.dataset.status;
+    const sameGeneration = slot.dataset.otpGeneration === String(v.otpGeneration);
+    const keptOtp = sameGeneration ? this.readOtp(slot) : '';
+
+    slot.innerHTML = this.verificationHtml(v);
+    slot.dataset.otpGeneration = String(v.otpGeneration);
+    slot.dataset.status = v.status;
+
+    this.setConsentLocked(widget, true);
+    this.attachVerificationHandlers(slot, v, keptOtp);
+    this.startCountdown(slot, v);
+
+    // Re-rendering drops focus, so put it where the user's next action is.
+    if (!prevStatus) {
+      slot.scrollIntoView?.({ block: 'nearest' });
+    }
+    if (v.status === 'required') {
+      slot.querySelector<HTMLButtonElement>('[data-otp-send]')?.focus();
+    } else if (v.status === 'otp_sent') {
+      const inputs = Array.from(slot.querySelectorAll<HTMLInputElement>('.otp-input'));
+      const firstEmpty = inputs.find(input => !input.value);
+      if (firstEmpty) firstEmpty.focus();
+      else slot.querySelector<HTMLButtonElement>('[data-otp-verify]')?.focus();
+    }
+  }
+
+  private verificationHtml(v: EmailVerificationState): string {
+    const email = escapeHtml(v.email);
+    const heading = `<h3 class="section-title" id="baseel-verify-title">Verify your email</h3>`;
+    const errorHtml = v.error
+      ? `<p class="verify-error" id="baseel-otp-error" role="alert"><span aria-hidden="true">&#9888;</span> ${escapeHtml(v.error.message)}</p>`
+      : '';
+
+    if (v.status === 'verified') {
+      return `
+        <section class="verify-section" aria-labelledby="baseel-verify-title">
+          ${heading}
+          <p class="verify-success" role="status"><span aria-hidden="true">&#10003;</span> Email verified successfully</p>
+          <p class="verify-email">${email}</p>
+        </section>`;
+    }
+
+    // Nothing sent yet: first "Send OTP" step.
+    if (v.resendAvailableAt === null) {
+      const sending = v.status === 'sending';
+      const badEmail = v.error?.kind === 'invalid_email';
+      return `
+        <section class="verify-section" aria-labelledby="baseel-verify-title">
+          ${heading}
+          <p class="verify-text">We need to verify your email before collecting your consent.</p>
+          <p class="verify-email">${email}</p>
+          <button type="button" class="btn btn-primary verify-btn" data-otp-send
+            ${sending ? 'disabled aria-busy="true"' : badEmail ? 'disabled' : ''}>${sending ? 'Sending OTP...' : 'Send OTP'}</button>
+          <p class="verify-hint">An OTP will be sent to your registered email address.</p>
+          ${errorHtml}
+        </section>`;
+    }
+
+    const verifying = v.status === 'verifying';
+    const resending = v.status === 'sending';
+    const inputAttrs = [
+      verifying || resending ? 'disabled' : '',
+      v.error?.kind === 'invalid' ? 'aria-invalid="true"' : '',
+      v.error ? 'aria-describedby="baseel-otp-error"' : '',
+    ].join(' ');
+    const inputsHtml = Array.from({ length: v.otpLength }, (_, i) => `
+      <input class="otp-input" type="text" inputmode="numeric" pattern="[0-9]*"
+        autocomplete="${i === 0 ? 'one-time-code' : 'off'}"
+        aria-label="Digit ${i + 1} of ${v.otpLength}" data-otp-index="${i}" ${inputAttrs} />`).join('');
+
+    return `
+      <section class="verify-section" aria-labelledby="baseel-verify-title">
+        ${heading}
+        <p class="verify-text">We sent a verification code to:</p>
+        <p class="verify-email">${email}</p>
+        <span class="otp-label" id="baseel-otp-label">Enter OTP</span>
+        <div class="otp-inputs" role="group" aria-labelledby="baseel-otp-label">${inputsHtml}</div>
+        <button type="button" class="btn btn-primary verify-btn" data-otp-verify disabled
+          ${verifying ? 'aria-busy="true"' : ''}>${verifying ? 'Verifying...' : 'Verify OTP'}</button>
+        <p class="verify-resend">
+          Didn't receive the OTP?
+          <span data-resend-countdown hidden></span>
+          <button type="button" class="link-btn" data-otp-resend hidden
+            ${resending ? 'aria-busy="true"' : ''}>${resending ? 'Resending...' : 'Resend OTP'}</button>
+        </p>
+        ${errorHtml}
+      </section>`;
+  }
+
+  private attachVerificationHandlers(slot: HTMLElement, v: EmailVerificationState, keptOtp: string): void {
+    // composed: false — these events (the verify one carries the OTP) stop at the
+    // shadow root, where the component listens, and never reach the host page.
+    const emit = (name: string, detail?: unknown) =>
+      slot.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: false }));
+
+    slot.querySelector<HTMLButtonElement>('[data-otp-send]')?.addEventListener('click', e => {
+      (e.currentTarget as HTMLButtonElement).disabled = true;
+      emit('baseel:internal:otp-send');
+    });
+
+    slot.querySelector<HTMLButtonElement>('[data-otp-resend]')?.addEventListener('click', e => {
+      (e.currentTarget as HTMLButtonElement).disabled = true;
+      emit('baseel:internal:otp-resend');
+    });
+
+    const inputs = Array.from(slot.querySelectorAll<HTMLInputElement>('.otp-input'));
+    const verifyBtn = slot.querySelector<HTMLButtonElement>('[data-otp-verify]');
+    if (!inputs.length || !verifyBtn) return;
+
+    const len = inputs.length;
+    const syncVerifyButton = () => {
+      verifyBtn.disabled = v.status !== 'otp_sent' || this.readOtp(slot).length !== len;
+    };
+    const fillFrom = (start: number, digits: string) => {
+      let i = start;
+      for (const digit of digits) {
+        if (i >= len) break;
+        inputs[i++].value = digit;
+      }
+      inputs[Math.min(i, len - 1)].focus();
+    };
+
+    keptOtp.split('').forEach((digit, i) => {
+      if (inputs[i]) inputs[i].value = digit;
+    });
+
+    inputs.forEach((input, index) => {
+      // Selecting on focus makes typing replace the digit instead of appending to it.
+      input.addEventListener('focus', () => input.select());
+
+      input.addEventListener('input', () => {
+        const digits = sanitizeOtp(input.value, len);
+        if (digits.length > 1) {
+          // Browser/SMS autofill or a mobile paste delivers several digits at once.
+          fillFrom(digits.length >= len ? 0 : index, digits);
+        } else {
+          input.value = digits;
+          if (digits && index < len - 1) inputs[index + 1].focus();
+        }
+        syncVerifyButton();
+      });
+
+      input.addEventListener('paste', e => {
+        e.preventDefault();
+        const digits = sanitizeOtp(e.clipboardData?.getData('text') ?? '', len);
+        if (!digits) return;
+        fillFrom(digits.length >= len ? 0 : index, digits);
+        syncVerifyButton();
+      });
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+          e.preventDefault();
+          inputs[index - 1].value = '';
+          inputs[index - 1].focus();
+          syncVerifyButton();
+        } else if (e.key === 'ArrowLeft' && index > 0) {
+          e.preventDefault();
+          inputs[index - 1].focus();
+        } else if (e.key === 'ArrowRight' && index < len - 1) {
+          e.preventDefault();
+          inputs[index + 1].focus();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (!verifyBtn.disabled) verifyBtn.click();
+        }
+      });
+    });
+
+    verifyBtn.addEventListener('click', () => {
+      const otp = this.readOtp(slot);
+      if (otp.length !== len) return;
+      verifyBtn.disabled = true;
+      emit('baseel:internal:otp-verify', { otp });
+    });
+
+    syncVerifyButton();
+  }
+
+  private readOtp(slot: HTMLElement): string {
+    const inputs = Array.from(slot.querySelectorAll<HTMLInputElement>('.otp-input'));
+    return sanitizeOtp(inputs.map(input => input.value).join(''), inputs.length);
+  }
+
+  private startCountdown(slot: HTMLElement, v: EmailVerificationState): void {
+    const countdown = slot.querySelector<HTMLElement>('[data-resend-countdown]');
+    const resendBtn = slot.querySelector<HTMLButtonElement>('[data-otp-resend]');
+    if (!countdown || !resendBtn || v.resendAvailableAt === null) return;
+
+    const availableAt = v.resendAvailableAt;
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((availableAt - Date.now()) / 1000));
+      if (remaining > 0) {
+        countdown.hidden = false;
+        countdown.textContent = `Resend OTP in ${remaining} second${remaining === 1 ? '' : 's'}`;
+        resendBtn.hidden = true;
+      } else {
+        countdown.hidden = true;
+        resendBtn.hidden = false;
+        resendBtn.disabled = v.status !== 'otp_sent';
+        this.stopCountdown();
+      }
+    };
+
+    tick();
+    if (resendBtn.hidden) this.countdownTimer = setInterval(tick, 1000);
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+  }
+
+  private setConsentLocked(widget: HTMLElement, locked: boolean): void {
+    widget.querySelectorAll<HTMLInputElement | HTMLButtonElement>(CONSENT_INPUT_SELECTOR).forEach(el => {
+      if (locked) {
+        if (!el.disabled) {
+          el.disabled = true;
+          el.dataset.verifyLocked = 'true';
+        }
+      } else if (el.dataset.verifyLocked) {
+        el.disabled = false;
+        delete el.dataset.verifyLocked;
+      }
+    });
+
+    if (!locked) {
+      const agreeCheck = widget.querySelector<HTMLInputElement>('[data-agree-check]');
+      const acceptBtn = widget.querySelector<HTMLButtonElement>('[data-action="accept"]');
+      if (agreeCheck && acceptBtn) acceptBtn.disabled = !agreeCheck.checked;
     }
   }
 
@@ -412,6 +733,7 @@ export class Renderer {
         <h3 class="section-title">What data we collect &amp; why</h3>
         <div class="purposes">${purposesHtml}</div>
       </div>
+      <div data-verify-slot></div>
       <div class="footer-section">
         ${footerHtml}
         <div class="actions">

@@ -382,6 +382,7 @@ All runtime configuration is passed **explicitly** by the consuming application:
 | `session-token` / `sessionToken` | `string` | **Yes** | — | Sent as `Authorization: Bearer {token}` on submit and as `?token=` on the template fetch. A leading `"Bearer "` prefix, if already present, is stripped before re-adding it. |
 | `screen-id` / `screenId` | `string` | **Yes** | — | The consent template UUID/code to fetch: `GET {apiBaseUrl}/api/template/{screenId}`. |
 | `api-base-url` / `apiBaseUrl` | `string` | No | `http://localhost:8080` (`DEFAULT_API_BASE_URL` constant) | Base URL prefixed to both API calls. |
+| `email` / `email` | `string` | No | — | When set, the user must verify this email by OTP inside the dialog before consent is submitted (`POST {apiBaseUrl}/api/otp/get-otp` and `/api/otp/verify-otp` with `type: CONSENT_VERIFICATION`). Omit it to keep the previous behaviour. |
 
 > ⚠️ **Warning:** If any of the three required attributes is missing, the component enters an `error` state with the message *"Missing required attributes: public-key, session-token, screen-id."* and logs `console.error('[baseel-consent] Missing required attributes: ...')` — no network call is made.
 
