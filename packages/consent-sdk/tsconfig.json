@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@baseel/types": ["../types/src/index.ts"],
+      "@baseel/loader": ["../loader/src/index.ts"],
+      "@baseel/consent-web-component": ["../consent-web-component/src/index.ts"],
+      "@baseel/consent-react": ["../consent-react/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

@@ -1,6 +1,7 @@
 {
   "name": "@baseel/loader",
   "version": "0.0.1",
+  "private": true,
   "description": "Lightweight script-tag loader for the Baseel Consent SDK",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "loader"],
   "author": "Baseel",

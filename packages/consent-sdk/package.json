@@ -1,0 +1,62 @@
+{
+  "name": "@baseel/consent-sdk",
+  "version": "0.3.0",
+  "description": "Baseel Consent SDK — web component, React component, loader and types in a single package",
+  "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "web-component", "custom-element", "react", "nextjs"],
+  "author": "Baseel",
+  "license": "MIT",
+  "homepage": "https://github.com/Baseel-IT-Services/consent-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Baseel-IT-Services/consent-sdk.git",
+    "directory": "packages/consent-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/Baseel-IT-Services/consent-sdk/issues"
+  },
+  "type": "module",
+  "files": ["dist", "README.md"],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "default": "./dist/react.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "react": ["./dist/react.d.ts"]
+    }
+  },
+  "sideEffects": true,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true },
+    "react-dom": { "optional": true }
+  }
+}
