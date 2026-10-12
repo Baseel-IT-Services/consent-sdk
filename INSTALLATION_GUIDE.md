@@ -736,13 +736,14 @@ This is a maintainer-only runbook — normal SDK consumers never need any of thi
    Each call may prompt for a 2FA OTP or a browser approval URL — **interactive, must be run by a human**, not scriptable against a personal account's browser-based 2FA. (For future CI automation, use an npm Granular Access Token scoped to `@baseel` with write + 2FA-bypass-for-publish, stored as a CI secret — not what was used for the initial publish.)
 7. Verify: `npm view @baseel/<name> version`, or `GET https://registry.npmjs.org/@baseel/<name>/<version>` (200 = live). Note: the *unversioned* packument endpoint can show a stale 404 for a few minutes post-publish (CDN edge-caching) — harmless and self-resolving; the version-pinned endpoint and npm's search index reflect the publish immediately.
 8. **For a future version bump:** bump `version` in `packages/consent-sdk/package.json`, rebuild, repeat steps 5–7.
-9. **(One-time) point users of the old packages at the new one:**
+9. **(One-time) remove the four old packages from the registry**, so only `@baseel/consent-sdk` is listed. Do this only **after** `@baseel/consent-sdk` is live (step 7). Run them in exactly this order — npm refuses to unpublish a package that another published package still depends on (`consent-react` → `consent-web-component` → `types`, `loader` → `types`):
    ```bash
-   npm deprecate @baseel/consent-react "Moved to @baseel/consent-sdk — import from '@baseel/consent-sdk/react'"
-   npm deprecate @baseel/consent-web-component "Moved to @baseel/consent-sdk"
-   npm deprecate @baseel/loader "Moved to @baseel/consent-sdk"
-   npm deprecate @baseel/types "Moved to @baseel/consent-sdk"
+   npm unpublish @baseel/consent-react --force
+   npm unpublish @baseel/consent-web-component --force
+   npm unpublish @baseel/loader --force
+   npm unpublish @baseel/types --force
    ```
+   npm only allows unpublishing a package older than 72 hours if it has no dependents on the registry, fewer than 300 downloads in the last week, and a single owner. If a command is refused, use `npm deprecate @baseel/<name> "Moved to @baseel/consent-sdk"` instead — the package then stays installable but shows a warning and is hidden from npm search. Unpublished names cannot be re-published for 24 hours, and unpublished version numbers can never be reused.
 
 ---
 
