@@ -11,7 +11,7 @@
 
 | | |
 |---|---|
-| **Version** | `@baseel/types` 0.1.0 · `@baseel/loader` 0.0.1 · `@baseel/consent-web-component` 0.1.0 · `@baseel/consent-react` 0.1.0 — all published live on the public npm registry under the `@baseel` scope |
+| **Version** | `@baseel/consent-sdk` 0.3.0 — the only package published on the public npm registry under the `@baseel` scope |
 | **Supported SDK Packages** | `@baseel/consent-sdk` (single package; bundles the internal `types`, `loader`, `consent-web-component` and `consent-react` modules) |
 | **Supported Frameworks** | React, Next.js, Vue 3, Nuxt 3/4, Angular, Svelte, SvelteKit, SolidJS, Astro, Vanilla JavaScript/HTML, standalone TypeScript |
 | **Supported Runtimes** | Any evergreen browser with native Custom Elements v1 + Shadow DOM v1 (Chrome/Edge, Firefox, Safari); Node.js (for `@baseel/loader` and for building/type-checking only — the widget itself is browser-only) |
@@ -155,7 +155,7 @@ The table below reflects **actual verification performed** in this repository's 
 | Aspect | Detail |
 |---|---|
 | Purpose | A standalone, headless application-config bootstrapper: `loadSdk()` singleton init, config validation, backend config fetch (`GET /v1/configs/{appId}`), a typed event bus, a logger, and an error hierarchy. **Not wired to the consent widget** — see [§1](#1-introduction). |
-| Installation command | Bundled into `@baseel/consent-sdk` (previously published standalone as `@baseel/loader@0.0.1`) |
+| Installation command | Bundled into `@baseel/consent-sdk` (previously published standalone as `@baseel/loader@0.0.1`, now unpublished) |
 | Import syntax | `import { loadSdk, ConfigurationError, InitializationError, ConsentError, ApiError } from '@baseel/consent-sdk';` |
 | When to use it | Use only if your application needs a generic app-config bootstrap/event-bus layer with its own backend contract (`/v1/configs/{appId}`) — **not** required to render the consent widget. |
 | Dependencies | `@baseel/types: "*"` |
@@ -167,7 +167,7 @@ The table below reflects **actual verification performed** in this repository's 
 | Aspect | Detail |
 |---|---|
 | Purpose | The actual consent banner/UI product — a native `<baseel-consent>` Custom Element rendered in Shadow DOM. Framework-agnostic. |
-| Installation command | Bundled into `@baseel/consent-sdk` (previously published standalone as `@baseel/consent-web-component@0.2.0`) |
+| Installation command | Bundled into `@baseel/consent-sdk` (previously published standalone as `@baseel/consent-web-component@0.2.0`, now unpublished) |
 | Import syntax | `import '@baseel/consent-sdk';` (side-effect import registers the custom element) |
 | When to use it | Use this directly in any non-React framework (Vue, Angular, Svelte, Astro, vanilla HTML) or when you want to avoid the React wrapper. |
 | Dependencies | None declared in `package.json` (only a type-only import of `@baseel/types`, erased at build — see the packaging caveat in [§16](#16-troubleshooting)) |
@@ -179,7 +179,7 @@ The table below reflects **actual verification performed** in this repository's 
 | Aspect | Detail |
 |---|---|
 | Purpose | A thin React wrapper (`<BaseelConsent>`) around `@baseel/consent-web-component`, for JSX-based consumption in React/Next.js apps. |
-| Installation command | Bundled into `@baseel/consent-sdk`, exposed as the `@baseel/consent-sdk/react` entry (previously published standalone as `@baseel/consent-react@0.2.0`) |
+| Installation command | Bundled into `@baseel/consent-sdk`, exposed as the `@baseel/consent-sdk/react` entry (previously published standalone as `@baseel/consent-react@0.2.0`, now unpublished) |
 | Import syntax | `import { BaseelConsent } from '@baseel/consent-sdk/react';` |
 | When to use it | Use in React or Next.js applications for idiomatic JSX usage instead of manually managing a raw custom element. |
 | Dependencies | `@baseel/consent-web-component: "0.0.1"` |
@@ -190,14 +190,7 @@ The table below reflects **actual verification performed** in this repository's 
 
 ## 5. Installation
 
-> **Published, verified fact:** All four packages are **live on the public npm registry** under the `@baseel` scope (owned by the npm organization `baseel`), each with `publishConfig.access: "public"`:
->
-> | Package | Version |
-> |---|---|
-> | `@baseel/types` | `0.1.0` |
-> | `@baseel/loader` | `0.0.1` |
-> | `@baseel/consent-web-component` | `0.1.0` |
-> | `@baseel/consent-react` | `0.1.0` |
+> **Published, verified fact:** `@baseel/consent-sdk@0.3.0` is **live on the public npm registry** under the `@baseel` scope (owned by the npm organization `baseel`). The four earlier packages (`@baseel/types`, `@baseel/loader`, `@baseel/consent-web-component`, `@baseel/consent-react`) have been unpublished.
 >
 > **Since `@baseel/consent-sdk` 0.3.0 there is only one package to install:** `npm install @baseel/consent-sdk`. It contains the web component, the React wrapper (`@baseel/consent-sdk/react`), `loadSdk` and all types, with zero `@baseel/*` runtime dependencies. The four packages listed above are now internal modules bundled into it.
 >
@@ -710,7 +703,7 @@ flowchart TD
 | `npm run test` | `turbo test` — runs `vitest run --passWithNoTests` in each package. Only `@baseel/loader` has actual tests (27, all passing). |
 | `npm run lint` | `turbo lint` — **a `lint` task is defined in `turbo.json`, but no ESLint/Prettier config exists anywhere in the repo.** |
 | `npm run typecheck` | `tsc --noEmit` (root-level) — type-checks `packages/*/src/**/*` against `tsconfig.base.json`. |
-| `npm publish` | Manual, per-package (`npm publish --access public` run from each package's own directory, in dependency order). All four packages are already published — see §14.1. No CI/CD automation exists yet. |
+| `npm publish` | Manual (`npm publish --access public` run from `packages/consent-sdk`). Only `@baseel/consent-sdk` is published — see §14.1. No CI/CD automation exists yet. |
 | Packaging | `npm pack` (run manually inside a package directory) → `<package-name>-<version>.tgz` — now only needed for contributor/local-dev testing of an unpublished change (§5.3); normal consumers install straight from the registry (§5.1). |
 
 Turbo caches each package's `dist/**` output keyed by its inputs — an unchanged package is skipped on subsequent builds (cache hit).
