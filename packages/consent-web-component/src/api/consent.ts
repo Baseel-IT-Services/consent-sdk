@@ -1,4 +1,5 @@
 import type { WidgetTemplate } from '@baseel/types';
+import { readBackendMessage } from './backendError.js';
 
 export interface SubmitPii {
   piiUuid: string;
@@ -42,16 +43,20 @@ export async function submitConsent(
     throw new Error('Network error: unable to reach the consent server.');
   }
 
-  if (response.status === 401 || response.status === 403) {
-    throw new Error('Invalid or expired session token.');
-  }
-
   if (!response.ok) {
-    throw new Error(`Consent submission failed (HTTP ${response.status}).`);
+    throw new Error(await failureMessage(response, `Consent submission failed (HTTP ${response.status}).`));
   }
 
   const data = await response.json().catch(() => ({}));
   return { consentId: data?.consentId ?? data?.uuid ?? data?.id };
+}
+
+// Show the backend's message as-is; the local text is only a fallback for bodies without one.
+async function failureMessage(response: Response, fallback: string): Promise<string> {
+  const message = await readBackendMessage(response);
+  if (message) return message;
+  if (response.status === 401 || response.status === 403) return 'Invalid or expired session token.';
+  return fallback;
 }
 
 export async function getConsentScreen(
@@ -75,12 +80,8 @@ export async function getConsentScreen(
     throw new Error('Network error: unable to reach the consent server.');
   }
 
-  if (response.status === 401 || response.status === 403) {
-    throw new Error('Invalid or expired session token.');
-  }
-
   if (!response.ok) {
-    throw new Error(`Failed to load consent screen (HTTP ${response.status}).`);
+    throw new Error(await failureMessage(response, `Failed to load consent screen (HTTP ${response.status}).`));
   }
 
   const data = await response.json();

@@ -14,6 +14,7 @@
 
 import { EMAIL_OTP_LENGTH } from '../constants.js';
 import { isValidEmail, isValidOtp } from '../component/EmailVerification.js';
+import { backendMessage } from './backendError.js';
 
 export const OTP_TYPE_CONSENT_VERIFICATION = 'CONSENT_VERIFICATION';
 
@@ -26,7 +27,7 @@ export type EmailOtpErrorKind =
   | 'request_failed'
   | 'verify_failed';
 
-/** User-facing copy — technical details (status codes, server messages) are never shown. */
+/** Fallback copy, used only when the backend response carries no `message` of its own. */
 export const EMAIL_OTP_ERROR_MESSAGES: Record<EmailOtpErrorKind, string> = {
   invalid_email: 'Please provide a valid email address to receive the OTP.',
   invalid: 'Invalid OTP. Please enter the correct verification code.',
@@ -40,8 +41,9 @@ export const EMAIL_OTP_ERROR_MESSAGES: Record<EmailOtpErrorKind, string> = {
 export class EmailOtpError extends Error {
   readonly kind: EmailOtpErrorKind;
 
-  constructor(kind: EmailOtpErrorKind) {
-    super(EMAIL_OTP_ERROR_MESSAGES[kind]);
+  /** `message` is the backend's own error text; the widget shows it in place of the fallback copy. */
+  constructor(kind: EmailOtpErrorKind, message?: string) {
+    super(message || EMAIL_OTP_ERROR_MESSAGES[kind]);
     this.name = 'EmailOtpError';
     this.kind = kind;
   }
@@ -90,10 +92,6 @@ async function postOtp(url: string, body: Record<string, unknown>): Promise<OtpR
   };
 }
 
-function serverMessage(data: Record<string, unknown>): string {
-  return typeof data.message === 'string' ? data.message : '';
-}
-
 /**
  * Validates the get-otp success body: `{ message?, challengeId?, expiresIn? }`.
  * Both fields are optional (the challenge may be cookie-bound), but when present they
@@ -124,8 +122,8 @@ export async function requestEmailOtp(email: string, apiBaseUrl: string): Promis
     type: OTP_TYPE_CONSENT_VERIFICATION,
   });
 
-  if (status === 429) throw new EmailOtpError('rate_limited');
-  if (!ok) throw new EmailOtpError('request_failed');
+  if (status === 429) throw new EmailOtpError('rate_limited', backendMessage(data));
+  if (!ok) throw new EmailOtpError('request_failed', backendMessage(data));
 
   return parseChallenge(data);
 }
@@ -154,10 +152,9 @@ export async function verifyEmailOtp(
 
   if (ok) return;
 
-  if (status === 429) throw new EmailOtpError('rate_limited');
-
-  const message = serverMessage(data);
-  if (EXPIRED_PATTERN.test(message)) throw new EmailOtpError('expired');
-  if (status === 401 || INVALID_PATTERN.test(message)) throw new EmailOtpError('invalid');
-  throw new EmailOtpError('verify_failed');
+  const message = backendMessage(data);
+  if (status === 429) throw new EmailOtpError('rate_limited', message);
+  if (EXPIRED_PATTERN.test(message)) throw new EmailOtpError('expired', message);
+  if (status === 401 || INVALID_PATTERN.test(message)) throw new EmailOtpError('invalid', message);
+  throw new EmailOtpError('verify_failed', message);
 }

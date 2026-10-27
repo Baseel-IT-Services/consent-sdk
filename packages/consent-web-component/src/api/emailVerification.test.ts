@@ -42,15 +42,23 @@ describe('requestEmailOtp', () => {
     expect(JSON.parse(init.body)).toEqual({ email: 'user@example.com', type: 'CONSENT_VERIFICATION' });
   });
 
-  it('maps failures to friendly errors without exposing server details', async () => {
-    mockFetch(500, { message: 'NullPointerException at OTPService' });
+  it('shows the backend message on failure, keeping the error kind', async () => {
+    mockFetch(400, { message: 'Email is not registered' });
+    const err = (await requestEmailOtp('user@example.com', API).catch((e: unknown) => e)) as EmailOtpError;
+    expect(err.kind).toBe('request_failed');
+    expect(err.message).toBe('Email is not registered');
+
+    mockFetch(429, { message: 'Too many requests' });
+    const limited = (await requestEmailOtp('user@example.com', API).catch((e: unknown) => e)) as EmailOtpError;
+    expect(limited.kind).toBe('rate_limited');
+    expect(limited.message).toBe('Too many requests');
+  });
+
+  it('falls back to the default copy when the backend sends no message', async () => {
+    mockFetch(500, {});
     const err = (await requestEmailOtp('user@example.com', API).catch((e: unknown) => e)) as EmailOtpError;
     expect(err.kind).toBe('request_failed');
     expect(err.message).toBe(EMAIL_OTP_ERROR_MESSAGES.request_failed);
-    expect(err.message).not.toMatch(/NullPointer|500/);
-
-    mockFetch(429, { message: 'Too many requests' });
-    expect(await errorKind(requestEmailOtp('user@example.com', API))).toBe('rate_limited');
   });
 
   it('reports network failures', async () => {
