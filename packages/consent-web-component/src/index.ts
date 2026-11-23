@@ -5,3 +5,4 @@ export type { ComponentConfig, ComponentState, StateData } from './component/ind
 export { BASEEL_EVENTS, dispatchConsentGranted, dispatchConsentDenied, dispatchConsentError } from './events/index.js';
 export type { ConsentGrantedDetail, ConsentDeniedDetail } from './events/index.js';
 export { ELEMENT_TAG, ATTR, DEFAULT_API_BASE_URL } from './constants.js';
+export * from './cookie-consent/index.js';

@@ -1,1 +1,2 @@
-// hooks will be added in future milestones
+export { useCookieConsent } from './useCookieConsent.js';
+export type { UseCookieConsentResult } from './useCookieConsent.js';

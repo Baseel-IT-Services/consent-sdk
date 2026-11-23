@@ -1,6 +1,6 @@
 {
   "name": "@baseel/consent-sdk",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Baseel Consent SDK — web component, React component, loader and types in a single package",
   "keywords": ["consent", "dpdp", "privacy", "sdk", "baseel", "web-component", "custom-element", "react", "nextjs"],
   "author": "Baseel",
@@ -30,11 +30,17 @@
       "import": "./dist/react.js",
       "default": "./dist/react.js"
     },
+    "./cookie-consent": {
+      "types": "./dist/cookie-consent.d.ts",
+      "import": "./dist/cookie-consent.js",
+      "default": "./dist/cookie-consent.js"
+    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
     "*": {
-      "react": ["./dist/react.d.ts"]
+      "react": ["./dist/react.d.ts"],
+      "cookie-consent": ["./dist/cookie-consent.d.ts"]
     }
   },
   "sideEffects": true,

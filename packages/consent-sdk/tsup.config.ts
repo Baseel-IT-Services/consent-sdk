@@ -8,6 +8,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     react: 'src/react.ts',
+    'cookie-consent': 'src/cookie-consent.ts',
   },
   format: ['esm'],
   dts: true,
